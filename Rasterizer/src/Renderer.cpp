@@ -22,6 +22,9 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
 
 	//m_pDepthBufferPixels = new float[m_Width * m_Height];
+	m_Triangle.push_back({ 0.0f, 0.5f, 1.0f });
+	m_Triangle.push_back({ 0.5f, -0.5f, 1.0f });
+	m_Triangle.push_back({ -0.5f, -0.5f, 1.0f });
 
 	//Initialize Camera
 	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });

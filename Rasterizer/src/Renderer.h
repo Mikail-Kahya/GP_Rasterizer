@@ -44,6 +44,7 @@ namespace dae
 		//float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
+		std::vector<Vector3> m_Triangle{};
 
 		int m_Width{};
 		int m_Height{};
