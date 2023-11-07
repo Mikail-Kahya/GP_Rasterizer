@@ -35,6 +35,12 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
 
 	private:
+		void Render_W1_Part1() const;
+		void Render_W1_Part2() const;
+		void Render_W1_Part3() const;
+		void Render_W1_Part4() const;
+		void Render_W1_Part5() const;
+
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
@@ -44,7 +50,7 @@ namespace dae
 		//float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
-		std::vector<Vector3> m_Triangle{};
+		std::vector<Vector3> m_VertexVec{};
 
 		int m_Width{};
 		int m_Height{};
