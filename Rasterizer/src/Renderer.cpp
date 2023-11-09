@@ -4,7 +4,6 @@
 
 //Project includes
 #include "Renderer.h"
-#include "Maths.h"
 #include "Texture.h"
 #include "Utils.h"
 
@@ -22,9 +21,9 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
 
 	//m_pDepthBufferPixels = new float[m_Width * m_Height];
-	m_VertexVec.push_back({ 0.0f, 0.5f, 1.0f });
-	m_VertexVec.push_back({ 0.5f, -0.5f, 1.0f });
-	m_VertexVec.push_back({ -0.5f, -0.5f, 1.0f });
+	m_TriangleVec.push_back(Triangle{	{ 0.0f, 0.5f, 1.0f },
+										{ 0.5f, -0.5f, 1.0f },
+										{ -0.5f, -0.5f, 1.0f } });
 
 	//Initialize Camera
 	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
@@ -48,25 +47,27 @@ void Renderer::Render()
 
 
 	//RENDER LOGIC
-	for (int px{}; px < m_Width; ++px)
-	{
-		for (int py{}; py < m_Height; ++py)
-		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+	//for (int px{}; px < m_Width; ++px)
+	//{
+	//	for (int py{}; py < m_Height; ++py)
+	//	{
+	//		float gradient = px / static_cast<float>(m_Width);
+	//		gradient += py / static_cast<float>(m_Width);
+	//		gradient /= 2.0f;
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+	//		ColorRGB finalColor{ gradient, gradient, gradient };
 
-			//Update Color in Buffer
-			finalColor.MaxToOne();
+	//		//Update Color in Buffer
+	//		finalColor.MaxToOne();
 
-			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
-		}
-	}
+	//		m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+	//			static_cast<uint8_t>(finalColor.r * 255),
+	//			static_cast<uint8_t>(finalColor.g * 255),
+	//			static_cast<uint8_t>(finalColor.b * 255));
+	//	}
+	//}
+
+	Render_W6_Part1();
 
 	//@END
 	//Update SDL Surface
@@ -75,53 +76,63 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::Render_W1_Part1() const
+void Renderer::Render_W6_Part1() const
 {
 	//RENDER LOGIC
-	for (int px{}; px < m_Width; ++px)
+
+	ColorRGB finalColor{ colors::White };
+
+	for (const Triangle& triangle : m_TriangleVec)
 	{
-		for (int py{}; py < m_Height; ++py)
+		std::vector vertexVec{ triangle.v0, triangle.v1, triangle.v2 };
+		std::vector<Vector2> screenSpaceVec{};
+		for (const Vector3& vertex : vertexVec)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
-
-			ColorRGB finalColor{ gradient, gradient, gradient };
-
-			//Update Color in Buffer
-			finalColor.MaxToOne();
-
-			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
+			// turn to screen space vertices
+			// + 0.5f for center of pixel
+			screenSpaceVec.push_back({ (vertex.x + 1) * 0.5f * m_Width + 0.5f,
+										(1 - vertex.y) * 0.5f * m_Height + 0.5f });
 		}
+
+		for (int px{}; px < m_Width; ++px)
+		{
+			for (int py{}; py < m_Height; ++py)
+			{
+				const bool inTriangle{ GeometryUtils::PixelInTriangle(	screenSpaceVec,
+																		Vector2{ static_cast<float>(px), static_cast<float>(py) }) };
+				if (!inTriangle)
+					continue;
+
+				//Update Color in Buffer
+				finalColor.MaxToOne();
+
+				m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
+			}
+		}
+
+		
 	}
-
-	for (const Vector3& vertex : m_VertexVec)
-	{
-		Vector2 screenSpaceVertex{};
-		screenSpaceVertex.x = (vertex.x + 1) * 0.5f * m_Width;
-		screenSpaceVertex.y = (1 - vertex.y) * 0.5f * m_Height;
-	}
 }
 
-void Renderer::Render_W1_Part2() const
+void Renderer::Render_W6_Part2() const
 {
 
 }
 
-void Renderer::Render_W1_Part3() const
+void Renderer::Render_W6_Part3() const
 {
 
 }
 
-void Renderer::Render_W1_Part4() const
+void Renderer::Render_W6_Part4() const
 {
 
 }
 
-void Renderer::Render_W1_Part5() const
+void Renderer::Render_W6_Part5() const
 {
 
 }

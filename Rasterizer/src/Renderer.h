@@ -4,12 +4,14 @@
 #include <vector>
 
 #include "Camera.h"
+#include "DataTypes.h"
 
 struct SDL_Window;
 struct SDL_Surface;
 
 namespace dae
 {
+	struct Vector3;
 	class Texture;
 	struct Mesh;
 	struct Vertex;
@@ -35,11 +37,11 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
 
 	private:
-		void Render_W1_Part1() const;
-		void Render_W1_Part2() const;
-		void Render_W1_Part3() const;
-		void Render_W1_Part4() const;
-		void Render_W1_Part5() const;
+		void Render_W6_Part1() const;
+		void Render_W6_Part2() const;
+		void Render_W6_Part3() const;
+		void Render_W6_Part4() const;
+		void Render_W6_Part5() const;
 
 		SDL_Window* m_pWindow{};
 
@@ -50,7 +52,7 @@ namespace dae
 		//float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
-		std::vector<Vector3> m_VertexVec{};
+		std::vector<Triangle> m_TriangleVec{};
 
 		int m_Width{};
 		int m_Height{};

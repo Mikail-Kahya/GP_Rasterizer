@@ -1,8 +1,9 @@
 #pragma once
-#include <cassert>
-
+#include "ColorRGB.h"
 #include "Math.h"
+#include "Matrix.h"
 #include "vector"
+#include "Vector3.h"
 
 namespace dae
 {
@@ -45,6 +46,7 @@ namespace dae
 		}
 		Triangle(const std::vector<Vector3>& vertices, const Vector3& normal):
 			Triangle(vertices[0], vertices[1], vertices[2], normal) {}
+
 
 		Vector3 v0{};
 		Vector3 v1{};
@@ -164,8 +166,8 @@ namespace dae
 			for (int index{}; index < static_cast<int>(normals.size()); ++index)
 				transformedNormals[index] = rotationTransform.TransformVector(normals[index]);
 
-			UpdateAABB();
-			UpdateTransformedAABB(finalTransform);
+			//UpdateAABB();
+			//UpdateTransformedAABB(finalTransform);
 		}
 
 		void ReserveSpace()
@@ -176,60 +178,60 @@ namespace dae
 				transformedPositions.resize(positions.size());
 		}
 
-		void UpdateAABB()
-		{
-			if (!positions.empty())
-			{
-				minAABB = positions[0];
-				maxAABB = positions[0];
-				for (const Vector3& pos : positions)
-				{
-					minAABB = Vector3::Min(pos, minAABB);
-					maxAABB = Vector3::Max(pos, maxAABB);
-				}
-			}
-		}
-
-		void UpdateTransformedAABB(const Matrix& finalTransform)
-		{
-			Vector3 tMinAABB{ finalTransform.TransformPoint(minAABB) };
-			Vector3 tMaxAABB{ tMinAABB };
-
-			// xMax / yMin / zMin
-			Vector3 tAABB{ finalTransform.TransformPoint(maxAABB.x,minAABB.y,minAABB.z) };
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMax / yMin / zMax
-			tAABB = finalTransform.TransformPoint(maxAABB.x,minAABB.y,maxAABB.z);
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMin / yMin / zMax
-			tAABB = finalTransform.TransformPoint(minAABB.x, minAABB.y, maxAABB.z);
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMax / yMax / zMin
-			tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMax / yMax / zMin
-			tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMax / yMax / zMax
-			tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, maxAABB.z);
-			tMinAABB = Vector3::Min(tAABB, tMinAABB);
-			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-
-			// xMin / yMax / zMax
-			tAABB = finalTransform.TransformPoint(minAABB.x, maxAABB.y, maxAABB.z);
-			transformedMinAABB = Vector3::Min(tAABB, tMinAABB);
-			transformedMaxAABB = Vector3::Max(tAABB, tMaxAABB);
-		}
+		//void UpdateAABB()
+		//{
+		//	if (!positions.empty())
+		//	{
+		//		minAABB = positions[0];
+		//		maxAABB = positions[0];
+		//		for (const Vector3& pos : positions)
+		//		{
+		//			minAABB = Vector3::Min(pos, minAABB);
+		//			maxAABB = Vector3::Max(pos, maxAABB);
+		//		}
+		//	}
+		//}
+		//
+		//void UpdateTransformedAABB(const Matrix& finalTransform)
+		//{
+		//	Vector3 tMinAABB{ finalTransform.TransformPoint(minAABB) };
+		//	Vector3 tMaxAABB{ tMinAABB };
+		//
+		//	// xMax / yMin / zMin
+		//	Vector3 tAABB{ finalTransform.TransformPoint(maxAABB.x,minAABB.y,minAABB.z) };
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMax / yMin / zMax
+		//	tAABB = finalTransform.TransformPoint(maxAABB.x,minAABB.y,maxAABB.z);
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMin / yMin / zMax
+		//	tAABB = finalTransform.TransformPoint(minAABB.x, minAABB.y, maxAABB.z);
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMax / yMax / zMin
+		//	tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMax / yMax / zMin
+		//	tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMax / yMax / zMax
+		//	tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, maxAABB.z);
+		//	tMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//
+		//	// xMin / yMax / zMax
+		//	tAABB = finalTransform.TransformPoint(minAABB.x, maxAABB.y, maxAABB.z);
+		//	transformedMinAABB = Vector3::Min(tAABB, tMinAABB);
+		//	transformedMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+		//}
 	};
 #pragma endregion
 #pragma region LIGHT
@@ -247,26 +249,6 @@ namespace dae
 		float intensity{};
 
 		LightType type{};
-	};
-#pragma endregion
-#pragma region MISC
-	struct Ray
-	{
-		Vector3 origin{};
-		Vector3 direction{};
-
-		float min{ 0.0001f };
-		float max{ FLT_MAX };
-	};
-
-	struct HitRecord
-	{
-		Vector3 origin{};
-		Vector3 normal{};
-		float t = FLT_MAX;
-
-		bool didHit{ false };
-		unsigned char materialIndex{ 0 };
 	};
 #pragma endregion
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cassert>
 #include <fstream>
 #include "Maths.h"
@@ -8,6 +9,31 @@
 
 namespace dae
 {
+	namespace GeometryUtils
+	{
+#pragma region Triangle HitTest
+		//TRIANGLE HIT-TESTS
+		inline bool PixelInTriangle(const std::vector<Vector2>& vertexVec, const Vector2& pixelPos)
+		{
+			const size_t nrVertices{ vertexVec.size() };
+
+			for (size_t index{}; index < nrVertices; ++index)
+			{
+				const size_t index2{ (index + 1) % nrVertices };
+
+				const Vector2 vertexToPixel{ vertexVec[index] - pixelPos };
+				const Vector2 edge{ vertexVec[index] - vertexVec[index2] };
+
+				if (Vector2::Cross(edge, vertexToPixel) < 0)
+					return false;
+			}
+
+			return true;
+		}
+
+#pragma endregion
+	}
+
 	namespace Utils
 	{
 		//Just parses vertices and indices
