@@ -1,4 +1,5 @@
 #include "Vector2.h"
+#include "Vector3.h"
 
 #include <cassert>
 
@@ -15,6 +16,8 @@ namespace dae {
 
 
 	Vector2::Vector2(const Vector2& from, const Vector2& to) : x(to.x - from.x), y(to.y - from.y) {}
+
+	Vector2::Vector2(const Vector3& other) : x{ other.x }, y{ other.y }{}
 
 	float Vector2::Magnitude() const
 	{

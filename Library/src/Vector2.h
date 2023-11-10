@@ -2,6 +2,7 @@
 
 namespace dae
 {
+	struct Vector3;
 	struct Vector2
 	{
 		float x{};
@@ -10,6 +11,7 @@ namespace dae
 		Vector2() = default;
 		Vector2(float _x, float _y);
 		Vector2(const Vector2& from, const Vector2& to);
+		Vector2(const Vector3& other);
 
 		float Magnitude() const;
 		float SqrMagnitude() const;

@@ -34,11 +34,11 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
+		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
 
 	private:
 		void Render_W6_Part1() const;
-		void Render_W6_Part2() const;
+		void Render_W6_Part2();
 		void Render_W6_Part3() const;
 		void Render_W6_Part4() const;
 		void Render_W6_Part5() const;
@@ -50,9 +50,9 @@ namespace dae
 		uint32_t* m_pBackBufferPixels{};
 
 		//float* m_pDepthBufferPixels{};
+		float m_AspectRatio{};
 
 		Camera m_Camera{};
-		std::vector<Triangle> m_TriangleVec{};
 
 		int m_Width{};
 		int m_Height{};

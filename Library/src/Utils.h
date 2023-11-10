@@ -11,15 +11,15 @@ namespace dae
 {
 	namespace GeometryUtils
 	{
-#pragma region Triangle HitTest
+#pragma region Triangle HitTest	
 		//TRIANGLE HIT-TESTS
 		inline bool PixelInTriangle(const std::vector<Vector2>& vertexVec, const Vector2& pixelPos)
 		{
-			const size_t nrVertices{ vertexVec.size() };
+			const int nrVertices{ static_cast<int>(vertexVec.size()) };
 
-			for (size_t index{}; index < nrVertices; ++index)
+			for (int index{}; index < nrVertices; ++index)
 			{
-				const size_t index2{ (index + 1) % nrVertices };
+				const int index2{ (index + 1) % nrVertices };
 
 				const Vector2 vertexToPixel{ vertexVec[index] - pixelPos };
 				const Vector2 edge{ vertexVec[index] - vertexVec[index2] };
@@ -29,6 +29,34 @@ namespace dae
 			}
 
 			return true;
+		}
+
+		inline bool PixelInTriangle(const Vector2& v0, const Vector2& v1, const Vector2& v2, const Vector2& pixelPos)
+		{
+			Vector2 vertexToPixel{ v0 - pixelPos };
+			Vector2 edge{ v1 - v0 };
+
+			if (Vector2::Cross(edge, vertexToPixel) < 0)
+				return false;
+
+			vertexToPixel = { v1 - pixelPos };
+			edge = { v2 - v1 };
+
+			if (Vector2::Cross(edge, vertexToPixel) < 0)
+				return false;
+
+			vertexToPixel = { v2 - pixelPos };
+			edge = { v0 - v2 };
+
+			if (Vector2::Cross(edge, vertexToPixel) < 0)
+				return false;
+
+			return true;
+		}
+
+		inline bool PixelInTriangle(const std::vector<Vertex>& vertexVec, const Vector2& pixelPos)
+		{
+			return PixelInTriangle(vertexVec[0].position, vertexVec[1].position, vertexVec[2].position, pixelPos);
 		}
 
 #pragma endregion

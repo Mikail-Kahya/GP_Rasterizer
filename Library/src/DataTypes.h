@@ -24,11 +24,32 @@ namespace dae
 		//Vector3 viewDirection{};
 	};
 
+	struct Triangle
+	{
+		Triangle() = default;
+
+		Triangle(const Vector3& _v0, const Vector3& _v1, const Vector3& _v2) :
+			v0{ _v0 }, v1{ _v1 }, v2{ _v2 }
+		{
+			//const Vector3 edgeV0V1 = _v1 - _v0;
+			//const Vector3 edgeV0V2 = _v2 - _v0;
+			//normal = Vector3::Cross(edgeV0V1, edgeV0V2).Normalized();
+		}
+		Triangle(const std::vector<Vector3>& vertices) :
+			Triangle(vertices[0], vertices[1], vertices[2]) {}
+
+
+		Vertex v0{};
+		Vertex v1{};
+		Vertex v2{};
+	};
+
 	enum class PrimitiveTopology
 	{
 		TriangleList,
 		TriangleStrip
 	};
+
 
 	struct Mesh
 	{
@@ -39,4 +60,11 @@ namespace dae
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
 	};
+
+	struct TriangleMesh
+	{
+		std::vector<Triangle> triangleVec{};
+		Matrix worldMatrix{};
+	};
+	
 }
