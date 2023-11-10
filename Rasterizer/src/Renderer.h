@@ -37,12 +37,6 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
 
 	private:
-		void Render_W6_Part1() const;
-		void Render_W6_Part2();
-		void Render_W6_Part3() const;
-		void Render_W6_Part4() const;
-		void Render_W6_Part5() const;
-
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
