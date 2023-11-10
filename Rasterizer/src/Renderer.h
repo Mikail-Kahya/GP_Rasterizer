@@ -37,6 +37,8 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
 
 	private:
+		void AddPixelToBuffer(ColorRGB& color, int x, int y) const;
+
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
@@ -50,5 +52,9 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		// Vectors here to prevent allocation on every frame
+		std::vector<Vector3> m_TrigVertexVec{};
+		std::vector<float> m_AreaParallelVec{};
 	};
 }

@@ -13,50 +13,24 @@ namespace dae
 	{
 #pragma region Triangle HitTest	
 		//TRIANGLE HIT-TESTS
-		inline bool PixelInTriangle(const std::vector<Vector2>& vertexVec, const Vector2& pixelPos)
+		inline bool PixelInTriangle(const std::vector<Vector3>& vertexVec, const Vector3& pixelPos, std::vector<float>& areaParallelVec)
 		{
 			const int nrVertices{ static_cast<int>(vertexVec.size()) };
 
-			for (int index{}; index < nrVertices; ++index)
+			for (int idx{}; idx < nrVertices; ++idx)
 			{
-				const int index2{ (index + 1) % nrVertices };
+				const int idx2{ (idx + 1) % nrVertices };
 
-				const Vector2 vertexToPixel{ vertexVec[index] - pixelPos };
-				const Vector2 edge{ vertexVec[index] - vertexVec[index2] };
+				const Vector2 vertexToPixel{ vertexVec[idx] - pixelPos };
+				const Vector2 edge{ vertexVec[idx] - vertexVec[idx2] };
+				const float areaParallel{ Vector2::Cross(edge, vertexToPixel) };
 
-				if (Vector2::Cross(edge, vertexToPixel) < 0)
+				if (areaParallel < 0)
 					return false;
+				areaParallelVec[idx] = areaParallel;
 			}
 
 			return true;
-		}
-
-		inline bool PixelInTriangle(const Vector2& v0, const Vector2& v1, const Vector2& v2, const Vector2& pixelPos)
-		{
-			Vector2 vertexToPixel{ v0 - pixelPos };
-			Vector2 edge{ v1 - v0 };
-
-			if (Vector2::Cross(edge, vertexToPixel) < 0)
-				return false;
-
-			vertexToPixel = { v1 - pixelPos };
-			edge = { v2 - v1 };
-
-			if (Vector2::Cross(edge, vertexToPixel) < 0)
-				return false;
-
-			vertexToPixel = { v2 - pixelPos };
-			edge = { v0 - v2 };
-
-			if (Vector2::Cross(edge, vertexToPixel) < 0)
-				return false;
-
-			return true;
-		}
-
-		inline bool PixelInTriangle(const std::vector<Vertex>& vertexVec, const Vector2& pixelPos)
-		{
-			return PixelInTriangle(vertexVec[0].position, vertexVec[1].position, vertexVec[2].position, pixelPos);
 		}
 
 #pragma endregion
