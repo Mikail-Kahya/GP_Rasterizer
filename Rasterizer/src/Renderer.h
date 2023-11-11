@@ -41,6 +41,7 @@ namespace dae
 		void AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const;
 		bool AddPixelToDepthBuffer(float depth, int x, int y) const;
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
+		Rect GetBoundingBox(const std::vector<Vector3>& vertexVec) const;
 
 		SDL_Window* m_pWindow{};
 

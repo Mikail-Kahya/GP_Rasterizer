@@ -44,6 +44,27 @@ namespace dae
 		Vertex v2{};
 	};
 
+	struct Rect
+	{
+		Rect() = default;
+
+		Rect(int _x, int _y, int _width, int _height)
+			: x{ _x }, y{ _y }, width{ _width }, height{ _height }
+		{}
+
+		Rect(const Vector2& p1, const Vector2& p2)
+			: x{ static_cast<int>(p1.x) }
+			, y{ static_cast<int>(p1.y) }
+			, width{ static_cast<int>(p2.x - p1.x) }
+			, height{ static_cast<int>(p2.y - p1.y) }
+		{}
+
+		int x{};
+		int y{};
+		int width{};
+		int height{};
+	};
+
 	enum class PrimitiveTopology
 	{
 		TriangleList,

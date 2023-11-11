@@ -88,7 +88,7 @@ namespace dae
 			{
 			case SDL_BUTTON(1):
 				MouseMove(mouseY, deltaTime);
-				Rotate(mouseX, 0, deltaTime);
+				//Rotate(mouseX, 0, deltaTime);
 				break;
 			case SDL_BUTTON(3):
 				Move(pKeyboardState, mouseState, mouseY, deltaTime);

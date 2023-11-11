@@ -81,11 +81,19 @@ void Renderer::Render()
 		const Vector2 edge2{ m_TrigVertexVec[2] - m_TrigVertexVec[0] };
 		const float areaTrig{ Vector2::Cross(edge1, edge2) / 2 };
 
-		for (int px{}; px < m_Width; ++px)
+		const Rect boundingBox{ GetBoundingBox(m_TrigVertexVec) };
+
+		// Clamp bounding box to not be any negative values (out of screen)
+		const int startX{ std::clamp(boundingBox.x, 0, m_Width) };
+		const int startY{ std::clamp(boundingBox.y, 0, m_Height) };
+		const int endX{ std::clamp(boundingBox.x + boundingBox.width, 0, m_Width) };
+		const int endY{ std::clamp(boundingBox.y + boundingBox.height, 0, m_Height) };
+
+		for (int px{ startX }; px < endX; ++px)
 		{
 			const float screenX{ px + 0.5f };
 
-			for (int py{}; py < m_Height; ++py)
+			for (int py{ startY }; py < endY; ++py)
 			{
 				ColorRGB finalColor{ };
 				float pixelDepth{};
@@ -179,6 +187,22 @@ Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
 		static_cast<uint8_t>(color.r * 255),
 		static_cast<uint8_t>(color.g * 255),
 		static_cast<uint8_t>(color.b * 255));
+}
+
+Rect Renderer::GetBoundingBox(const std::vector<Vector3>&vertexVec) const
+{
+	Vector2 bottomLeft{ vertexVec[0] };
+	Vector2 topRight{ vertexVec[0] };
+
+	for (const Vector3& vertex : vertexVec)
+	{
+		bottomLeft.x = std::min(bottomLeft.x, vertex.x);
+		bottomLeft.y = std::min(bottomLeft.y, vertex.y);
+		topRight.x = std::max(topRight.x, vertex.x);
+		topRight.y = std::max(topRight.y, vertex.y);
+	}
+
+	return Rect{ bottomLeft, topRight };
 }
 
 bool Renderer::SaveBufferToImage() const
