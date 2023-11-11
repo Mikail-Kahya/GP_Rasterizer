@@ -20,7 +20,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
 	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
 
-	//m_pDepthBufferPixels = new float[m_Width * m_Height];
+	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	const int nrTrigVertices{ 3 };
 
@@ -35,7 +35,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 Renderer::~Renderer()
 {
-	//delete[] m_pDepthBufferPixels;
+	delete[] m_pDepthBufferPixels;
 }
 
 void Renderer::Update(Timer* pTimer)
@@ -49,9 +49,16 @@ void Renderer::Render()
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
 
+	UpdateBuffer();
+
 	// Setup vertices for screen space
 	std::vector<Vertex> vertices_world
 	{
+		// Triangle 1
+		{{0.f, 2.f, 0.f}, {1, 0, 0}},
+		{{1.5f, -1.f, 0.f}, {1, 0, 0}},
+		{{-1.5f, -1.f, 0.f}, {1, 0 ,0}},
+		// Triangle 2
 		{{0.f, 4.f, 2.f}, {1, 0, 0}},
 		{{3.f, -2.f, 2.f}, {0, 1, 0}},
 		{{-3.f, -2.f, 2.f}, {0, 0 ,1}}
@@ -69,6 +76,7 @@ void Renderer::Render()
 		for (int vertexIdx{}; vertexIdx < nrTrigVertices; ++vertexIdx)
 			m_TrigVertexVec[vertexIdx] = screenSpaceVec[trigIdx * nrTrigVertices + vertexIdx].position;
 
+		// Calculate area of triangle
 		const Vector2 edge1{ m_TrigVertexVec[1] - m_TrigVertexVec[0] };
 		const Vector2 edge2{ m_TrigVertexVec[2] - m_TrigVertexVec[0] };
 		const float areaTrig{ Vector2::Cross(edge1, edge2) / 2 };
@@ -80,6 +88,7 @@ void Renderer::Render()
 			for (int py{}; py < m_Height; ++py)
 			{
 				ColorRGB finalColor{ };
+				float pixelDepth{};
 
 				const float screenY{ py + 0.5f };
 				const Vector3 pixelPos{ screenX, screenY, 1 };
@@ -88,19 +97,19 @@ void Renderer::Render()
 				const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TrigVertexVec, pixelPos, m_AreaParallelVec) };
 
 				if (!inTriangle)
-				{
-					AddPixelToBuffer(finalColor, px, py);
 					continue;
-				}
 
-				// Add color
-				for (int colorIdx{}; colorIdx < nrTrigVertices; ++colorIdx)
+				// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
+				for (int interpolateIdx{}; interpolateIdx < nrTrigVertices; ++interpolateIdx)
 				{
-					const float weight{ (m_AreaParallelVec[colorIdx] * 0.5f) / areaTrig };
-					finalColor += screenSpaceVec[(colorIdx + 2) % nrTrigVertices].color * weight;
-				}
+					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTrig };
+					const Vertex& vertex{ screenSpaceVec[(trigIdx * nrTrigVertices + interpolateIdx)] };
 
-				AddPixelToBuffer(finalColor, px, py);
+					finalColor += vertex.color * weight;
+					pixelDepth += vertex.position.z * weight;
+				}
+				if (AddPixelToDepthBuffer(pixelDepth, px, py))
+					AddPixelToRGBBuffer(finalColor, px, py);
 			}
 		}
 	}
@@ -120,9 +129,9 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec
 	{
 		Vector3 vertex{ m_Camera.invViewMatrix.TransformPoint(vertexVec_in[idx].position) };
 
-		// might need to change in the future not to divide the z component
 		// Add perspective
-		vertex /= vertex.z;
+		vertex.x /= vertex.z;
+		vertex.y /= vertex.z;
 
 		// Account for screen dimensions and fov
 		vertex.x /= m_Camera.fov * m_AspectRatio;
@@ -137,12 +146,36 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec
 	}
 }
 
-void Renderer::AddPixelToBuffer(ColorRGB& color, int x, int y) const
+void Renderer::UpdateBuffer()
+{
+	const int nrPixels{ m_Width * m_Height };
+	for (int idx{}; idx < nrPixels; ++idx)
+		m_pDepthBufferPixels[idx] = std::numeric_limits<float>::max();
+
+	SDL_FillRect(m_pBackBuffer, nullptr, GetSDLRGB(m_ClearColor));
+}
+
+void Renderer::AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const
 {
 	//Update Color in Buffer
 	color.MaxToOne();
 
-	m_pBackBufferPixels[x + (y * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+	m_pBackBufferPixels[x + (y * m_Width)] = GetSDLRGB(color);
+}
+
+bool Renderer::AddPixelToDepthBuffer(float depth, int x, int y) const
+{
+	const int idx{ x + (y * m_Width) };
+	const bool isCloser{ m_pDepthBufferPixels[idx] >= depth };
+	if (isCloser)
+		m_pDepthBufferPixels[idx] = depth;
+
+	return isCloser;
+}
+
+Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
+{
+	return SDL_MapRGB(m_pBackBuffer->format,
 		static_cast<uint8_t>(color.r * 255),
 		static_cast<uint8_t>(color.g * 255),
 		static_cast<uint8_t>(color.b * 255));

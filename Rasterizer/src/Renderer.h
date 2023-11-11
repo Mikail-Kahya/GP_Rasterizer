@@ -37,18 +37,22 @@ namespace dae
 		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
 
 	private:
-		void AddPixelToBuffer(ColorRGB& color, int x, int y) const;
+		void UpdateBuffer();
+		void AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const;
+		bool AddPixelToDepthBuffer(float depth, int x, int y) const;
+		Uint32 GetSDLRGB(const ColorRGB& color) const;
 
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{};
-
-		//float* m_pDepthBufferPixels{};
-		float m_AspectRatio{};
+		
+		ColorRGB m_ClearColor{};
+		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
+		float m_AspectRatio{};
 
 		int m_Width{};
 		int m_Height{};

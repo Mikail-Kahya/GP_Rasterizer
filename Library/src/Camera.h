@@ -84,7 +84,6 @@ namespace dae
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
 			// mouseState: left == 1, middle == 2, right == 3
-
 			switch (mouseState)
 			{
 			case SDL_BUTTON(1):
@@ -150,6 +149,7 @@ namespace dae
 			{
 				const Matrix finalTransform{ Matrix::CreateRotation(TO_RADIANS * totalPitch, TO_RADIANS * totalYaw, 0) };
 				forward = finalTransform.TransformVector(Vector3::UnitZ);
+				forward.Normalize();
 			}
 		}
 
