@@ -135,7 +135,7 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec
 	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
 	for (int idx{}; idx < nrVertices; ++idx)
 	{
-		Vector3 vertex{ m_Camera.invViewMatrix.TransformPoint(vertexVec_in[idx].position) };
+		Vector3 vertex{ m_Camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
 
 		// Add perspective
 		vertex.x /= vertex.z;

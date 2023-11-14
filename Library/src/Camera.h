@@ -30,8 +30,12 @@ namespace dae
 		float totalPitch{};
 		float totalYaw{};
 
-		Matrix invViewMatrix{};
-		Matrix viewMatrix{};
+		Matrix worldToCamera{};
+		Matrix cameraToWorld{};
+
+		// in degrees
+		float rotateSpeed{ 1760.f };
+		float moveSpeed{ 20.f };
 
 		void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})
 		{
@@ -50,12 +54,13 @@ namespace dae
 			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
 			up = Vector3::Cross(forward, right).Normalized();
 
-			viewMatrix = Matrix{	{right, 0},
-									{up, 0},
-									{forward, 0},
-									{origin, 1}
-								};
-			invViewMatrix = viewMatrix.Inverse();
+			//viewMatrix = Matrix{	{right, 0},
+			//						{up, 0},
+			//						{forward, 0},
+			//						{origin, 1}
+			//					};
+
+			worldToCamera = Matrix::CreateLookAtLH(origin, forward, up, right);
 
 			//ViewMatrix => Matrix::CreateLookAtLH(...) [not implemented yet]
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixlookatlh
@@ -104,7 +109,6 @@ namespace dae
 	private:
 		void Move(const uint8_t* keyboardStatePtr, uint32_t mouseState, int mouseY, float deltaTime)
 		{
-			const float moveSpeed{ 10.f };
 			const float movedDistance{ moveSpeed * deltaTime };
 
 			// WASD in camera view
@@ -130,17 +134,18 @@ namespace dae
 
 		void Rotate(int mouseX, int mouseY, float deltaTime)
 		{
-			const float MouseSpeed{ 20.f };
 			bool mouseMoved{ false };
 
 			if (mouseX)
 			{
-				totalYaw += mouseX * deltaTime * MouseSpeed;
+				totalYaw += mouseX / abs(mouseX) * deltaTime * rotateSpeed;
+				totalYaw = std::fmod(totalYaw, 360.f);
 				mouseMoved = true;
 			}
 			if (mouseY)
 			{
-				totalPitch += mouseY * deltaTime * MouseSpeed;
+				// Flor allowed this :)
+				totalPitch -= mouseY / abs(mouseY) * deltaTime * rotateSpeed;
 				totalPitch = std::clamp(totalPitch, -90.f, 90.f);
 				mouseMoved = true;
 			}
@@ -148,7 +153,7 @@ namespace dae
 			if (mouseMoved)
 			{
 				const Matrix finalTransform{ Matrix::CreateRotation(TO_RADIANS * totalPitch, TO_RADIANS * totalYaw, 0) };
-				forward = finalTransform.TransformVector(Vector3::UnitZ);
+				forward = finalTransform.TransformPoint(Vector3::UnitZ);
 				forward.Normalize();
 			}
 		}
