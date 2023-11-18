@@ -45,16 +45,61 @@ void Renderer::Render()
 	UpdateBuffer();
 
 	// Setup vertices for screen space
-	const int nrVertices{ static_cast<int>(m_ScenePtr->GetVertices().size()) };
-	std::vector<Vertex> screenSpaceVec{};
-	screenSpaceVec.resize(nrVertices);
-	VertexTransformationFunction(m_ScenePtr->GetVertices(), screenSpaceVec);
+	for (Mesh& mesh : m_ScenePtr->GetMeshes())
+		mesh.vertices_out.clear();
 
+	VertexTransformationFunction(m_ScenePtr->GetMeshes());
+
+	//@END
+	//Update SDL Surface
+	SDL_UnlockSurface(m_pBackBuffer);
+	SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
+	SDL_UpdateWindowSurface(m_pWindow);
+}
+
+void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshVec) const
+{
+	for (Mesh& mesh : meshVec)
+		VertexTransformationFunction(mesh.vertices, mesh.vertices_out);
+}
+
+void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const
+{
+	//Todo > W1 Projection Stage
+	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
+	const Camera& camera{ m_ScenePtr->GetCamera() };
+
+	for (int idx{}; idx < nrVertices; ++idx)
+	{
+		Vector3 vertex{ camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
+
+		// Add perspective
+		vertex.x /= vertex.z;
+		vertex.y /= vertex.z;
+
+		// Account for screen dimensions and fov
+		vertex.x /= camera.fov * m_AspectRatio;
+		vertex.y /= camera.fov;
+
+		// NDC (Normalized Device Coordinates) ===> Screen space
+		vertex.x = (vertex.x + 1) * 0.5f * m_Width;
+		vertex.y = (1 - vertex.y) * 0.5f * m_Height;
+
+		vertexVec_out[idx].position = vertex;
+		vertexVec_out[idx].color = vertexVec_in[idx].color;
+	}
+}
+
+void Renderer::RenderMesh(const std::vector<Vertex>& screenSpaceVec)
+{
+	const int nrVertices{ static_cast<int>(m_ScenePtr->GetVertices().size()) };
 	const int nrTrigVertices{ 3 };
 	const int nrTrigs{ nrVertices / nrTrigVertices };
 
 	for (int trigIdx{}; trigIdx < nrTrigs; ++trigIdx)
 	{
+		const bool isEven{ trigIdx % 2 == 0 };
+
 		// Fill up the current triangle
 		for (int vertexIdx{}; vertexIdx < nrTrigVertices; ++vertexIdx)
 			m_TrigVertexVec[vertexIdx] = screenSpaceVec[trigIdx * nrTrigVertices + vertexIdx].position;
@@ -103,39 +148,6 @@ void Renderer::Render()
 					AddPixelToRGBBuffer(finalColor, px, py);
 			}
 		}
-	}
-
-	//@END
-	//Update SDL Surface
-	SDL_UnlockSurface(m_pBackBuffer);
-	SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
-	SDL_UpdateWindowSurface(m_pWindow);
-}
-
-void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const
-{
-	//Todo > W1 Projection Stage
-	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
-	const Camera& camera{ m_ScenePtr->GetCamera() };
-
-	for (int idx{}; idx < nrVertices; ++idx)
-	{
-		Vector3 vertex{ camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
-
-		// Add perspective
-		vertex.x /= vertex.z;
-		vertex.y /= vertex.z;
-
-		// Account for screen dimensions and fov
-		vertex.x /= camera.fov * m_AspectRatio;
-		vertex.y /= camera.fov;
-
-		// NDC (Normalized Device Coordinates) ===> Screen space
-		vertex.x = (vertex.x + 1) * 0.5f * m_Width;
-		vertex.y = (1 - vertex.y) * 0.5f * m_Height;
-
-		vertexVec_out[idx].position = vertex;
-		vertexVec_out[idx].color = vertexVec_in[idx].color;
 	}
 }
 

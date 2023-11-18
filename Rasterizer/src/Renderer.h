@@ -33,10 +33,13 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
+		void VertexTransformationFunction(std::vector<Mesh>& meshVec) const;
+		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const;
 		void SetScene(Scene* scenePtr) { m_ScenePtr = scenePtr; }
 
 	private:
+		void RenderMesh(const std::vector<Vertex>& screenSpaceVec);
+
 		void UpdateBuffer();
 		void AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const;
 		bool AddPixelToDepthBuffer(float depth, int x, int y) const;

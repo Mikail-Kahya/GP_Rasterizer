@@ -28,7 +28,7 @@ namespace dae
 
 		const Camera& GetCamera() { return m_Camera; }
 		const std::vector<Vertex>& GetVertices() const { return m_VertexVec; }
-		const std::vector<Mesh>& GetMeshes() const { return m_MeshVec; }
+		std::vector<Mesh>& GetMeshes() { return m_MeshVec; }
 
 	protected:
 		std::string	sceneName;
