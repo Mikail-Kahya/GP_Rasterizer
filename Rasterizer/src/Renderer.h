@@ -37,7 +37,7 @@ namespace dae
 
 	private:
 		// Rendering functions
-		void RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec);
+		void RenderMesh(const Mesh& mesh);
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in) const;
@@ -50,6 +50,7 @@ namespace dae
 		// Helpers
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
 		Rect GetBoundingBox(const std::vector<Vector3>& vertexVec) const;
+		int GetNrStripVertices(const std::vector<uint32_t>& indices) const;
 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};

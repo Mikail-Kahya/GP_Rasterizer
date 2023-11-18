@@ -49,7 +49,7 @@ void Renderer::Render()
 	VerticesTransform(m_ScenePtr->GetMeshes());
 
 	for (const Mesh& mesh : m_ScenePtr->GetMeshes())
-		RenderMesh(mesh.vertices_out);
+		RenderMesh(mesh);
 
 	//@END
 	//Update SDL Surface
@@ -62,6 +62,9 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 {
 	for (Mesh& mesh : meshVec)
 	{
+		for (Vertex& vertex : mesh.vertices)
+			mesh.vertices_out.push_back(VertexTransform(vertex));
+		
 		const int nrTris{ static_cast<int>(mesh.indices.size()) / NR_TRI_VERTS };
 
 		for (int triIdx{}; triIdx < nrTris; ++triIdx)
@@ -102,9 +105,21 @@ Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in) const
 	return { pos, vertex_in.color };
 }
 
-void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
+void Renderer::RenderMesh(const Mesh& mesh)
 {
-	const int nrVertices{ static_cast<int>(screenSpaceVec.size()) };
+	int nrVertices{};
+
+	switch (mesh.primitiveTopology)
+	{
+	case PrimitiveTopology::TriangleList:
+		nrVertices = static_cast<int>(mesh.indices.size());
+		break;
+	case PrimitiveTopology::TriangleStrip:
+		nrVertices = GetNrStripVertices(mesh.indices);
+		break;
+	}
+
+	//const int nrVertices{ static_cast<int>(mesh.indices.size()) };
 	const int nrTrigs{ nrVertices / NR_TRI_VERTS };
 
 	for (int trigIdx{}; trigIdx < nrTrigs; ++trigIdx)
@@ -114,7 +129,10 @@ void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
 
 		// Fill up the current triangle
 		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-			m_TrigVertexVec[vertexIdx] = screenSpaceVec[trigIdx * NR_TRI_VERTS + vertexIdx].position;
+		{
+			const uint32_t indicesIdx{ mesh.indices[trigIdx * NR_TRI_VERTS + vertexIdx] };
+			m_TrigVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx].position;
+		}
 
 		// Calculate area of triangle
 		const Vector2 edge1{ m_TrigVertexVec[1] - m_TrigVertexVec[0] };
@@ -151,7 +169,7 @@ void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
 				for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 				{
 					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
-					const Vertex_Out& vertex{ screenSpaceVec[(trigIdx * NR_TRI_VERTS + interpolateIdx)] };
+					const Vertex_Out& vertex{ mesh.vertices_out[(trigIdx * NR_TRI_VERTS + interpolateIdx)] };
 
 					finalColor += vertex.color * weight;
 					pixelDepth += vertex.position.z * weight;
@@ -212,6 +230,22 @@ Rect Renderer::GetBoundingBox(const std::vector<Vector3>&vertexVec) const
 	}
 
 	return Rect{ bottomLeft, topRight };
+}
+
+int Renderer::GetNrStripVertices(const std::vector<uint32_t>& indices) const
+{
+	int nrOfStrips{};
+	int prevNr{ -1 };
+
+	for (uint32_t idx : indices)
+	{
+		if (prevNr == idx)
+			++nrOfStrips;
+		prevNr = idx;
+	}
+
+	// there will always be two doubles per degenerate tri so divide by 2
+	return static_cast<int>(indices.size()) - nrOfStrips / 2;
 }
 
 bool Renderer::SaveBufferToImage() const
