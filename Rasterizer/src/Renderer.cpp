@@ -212,15 +212,16 @@ Rect Renderer::GetBoundingBox() const noexcept
 	if (m_TriangleVertexVec.empty())
 		return {};
 
+	constexpr int margin{ 2 };
 	Vector2 bottomLeft{ m_TriangleVertexVec[0].position };
 	Vector2 topRight{ m_TriangleVertexVec[0].position };
 
 	for (const Vertex_Out& vertex : m_TriangleVertexVec)
 	{
-		bottomLeft.x = std::min(bottomLeft.x, vertex.position.x);
-		bottomLeft.y = std::min(bottomLeft.y, vertex.position.y);
-		topRight.x = std::max(topRight.x, vertex.position.x);
-		topRight.y = std::max(topRight.y, vertex.position.y);
+		bottomLeft.x = std::min(bottomLeft.x, vertex.position.x - margin);
+		bottomLeft.y = std::min(bottomLeft.y, vertex.position.y - margin);
+		topRight.x = std::max(topRight.x, vertex.position.x + margin);
+		topRight.y = std::max(topRight.y, vertex.position.y + margin);
 	}
 
 	return Rect{ bottomLeft, topRight };
@@ -270,22 +271,14 @@ void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)
 
 void Renderer::FillTriangleStrip(const Mesh& mesh, int triIdx)
 {
-
-	const bool isEven{ triIdx % 2 == 0 };
-	if (isEven)
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
 	{
-		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-		{
-			const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
-			m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
-		}
+		const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
+		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
 	}
-	else
-	{
-		m_TriangleVertexVec[0] = mesh.vertices_out[mesh.indices[triIdx]];
-		m_TriangleVertexVec[1] = mesh.vertices_out[mesh.indices[triIdx + 2]];
-		m_TriangleVertexVec[2] = mesh.vertices_out[mesh.indices[triIdx + 1]];
-	}
+	
+	if (triIdx % 2 != 0)
+		std::swap(m_TriangleVertexVec[1], m_TriangleVertexVec[2]);
 }
 
 bool Renderer::SaveBufferToImage() const
