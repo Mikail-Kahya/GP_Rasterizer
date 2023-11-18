@@ -50,6 +50,9 @@ void Renderer::Render()
 
 	VertexTransform(m_ScenePtr->GetMeshes());
 
+	for (const Mesh& mesh : m_ScenePtr->GetMeshes())
+		RenderMesh(mesh.vertices_out);
+
 	//@END
 	//Update SDL Surface
 	SDL_UnlockSurface(m_pBackBuffer);
@@ -71,7 +74,7 @@ void Renderer::VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vec
 
 	for (int idx{}; idx < nrVertices; ++idx)
 	{
-		Vector3 vertex{ camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
+		Vector4 vertex{ camera.worldToCamera.TransformPoint({vertexVec_in[idx].position, 0}) };
 
 		// Add perspective
 		vertex.x /= vertex.z;
@@ -90,7 +93,7 @@ void Renderer::VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vec
 	}
 }
 
-void Renderer::RenderMesh(const std::vector<Vertex>& screenSpaceVec)
+void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
 {
 	const int nrVertices{ static_cast<int>(m_ScenePtr->GetVertices().size()) };
 	const int nrTrigVertices{ 3 };
@@ -139,7 +142,7 @@ void Renderer::RenderMesh(const std::vector<Vertex>& screenSpaceVec)
 				for (int interpolateIdx{}; interpolateIdx < nrTrigVertices; ++interpolateIdx)
 				{
 					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTrig };
-					const Vertex& vertex{ screenSpaceVec[(trigIdx * nrTrigVertices + interpolateIdx)] };
+					const Vertex_Out& vertex{ screenSpaceVec[(trigIdx * nrTrigVertices + interpolateIdx)] };
 
 					finalColor += vertex.color * weight;
 					pixelDepth += vertex.position.z * weight;
