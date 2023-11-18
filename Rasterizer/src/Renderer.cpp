@@ -64,22 +64,6 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 	{
 		for (Vertex& vertex : mesh.vertices)
 			mesh.vertices_out.push_back(VertexTransform(vertex));
-		
-		const int nrTris{ static_cast<int>(mesh.indices.size()) / NR_TRI_VERTS };
-
-		for (int triIdx{}; triIdx < nrTris; ++triIdx)
-		{
-			const int vertexOffset{ NR_TRI_VERTS * triIdx };
-			const int vertexEnd{ vertexOffset + NR_TRI_VERTS };
-
-			for(int indicesIdx{ vertexOffset }; indicesIdx < vertexEnd; ++indicesIdx)
-			{
-				// Get vertex from indices
-				const uint32_t vertexIdx{ mesh.indices[indicesIdx] };
-				Vertex_Out vertex{ VertexTransform(mesh.vertices[vertexIdx]) };
-				mesh.vertices_out.push_back(std::move(vertex));
-			}
-		}
 	}
 }
 
