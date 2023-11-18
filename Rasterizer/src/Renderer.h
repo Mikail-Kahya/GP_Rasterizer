@@ -33,8 +33,8 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void VertexTransformationFunction(std::vector<Mesh>& meshVec) const;
-		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const;
+		void VertexTransform(std::vector<Mesh>& meshVec) const;
+		void VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const;
 		void SetScene(Scene* scenePtr) { m_ScenePtr = scenePtr; }
 
 	private:

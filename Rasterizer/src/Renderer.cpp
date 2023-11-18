@@ -48,7 +48,7 @@ void Renderer::Render()
 	for (Mesh& mesh : m_ScenePtr->GetMeshes())
 		mesh.vertices_out.clear();
 
-	VertexTransformationFunction(m_ScenePtr->GetMeshes());
+	VertexTransform(m_ScenePtr->GetMeshes());
 
 	//@END
 	//Update SDL Surface
@@ -57,13 +57,13 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::VertexTransformationFunction(std::vector<Mesh>& meshVec) const
+void Renderer::VertexTransform(std::vector<Mesh>& meshVec) const
 {
 	for (Mesh& mesh : meshVec)
-		VertexTransformationFunction(mesh.vertices, mesh.vertices_out);
+		VertexTransform(mesh.vertices, mesh.vertices_out);
 }
 
-void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const
+void Renderer::VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const
 {
 	//Todo > W1 Projection Stage
 	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
