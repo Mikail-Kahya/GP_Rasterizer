@@ -44,7 +44,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
-	Scene* scenePtr{ new Scene_W7_List() };
+	Scene* scenePtr{ new Scene_W7_Strip() };
 
 	//Start loop
 	pTimer->Start();
@@ -105,6 +105,7 @@ int main(int argc, char* args[])
 	//Shutdown "framework"
 	delete pRenderer;
 	delete pTimer;
+	delete scenePtr;
 
 	ShutDown(pWindow);
 	return 0;

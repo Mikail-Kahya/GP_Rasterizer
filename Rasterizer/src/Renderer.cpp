@@ -115,7 +115,7 @@ void Renderer::RenderMesh(const Mesh& mesh)
 		nrTris = static_cast<int>(mesh.indices.size()) / NR_TRI_VERTS;
 		break;
 	case PrimitiveTopology::TriangleStrip:
-		nrTris = GetNrStripTris(mesh.indices);
+		nrTris = static_cast<int>(mesh.indices.size()) - 2;
 		break;
 	}
 
@@ -128,15 +128,19 @@ void Renderer::RenderMesh(const Mesh& mesh)
 			FillTriangleList(mesh, triIdx);
 			break;
 		case PrimitiveTopology::TriangleStrip:
+			// Skip degenerate triangles
+			if (IsDegenerate(mesh, triIdx))
+				continue;
+			
 			FillTriangleStrip(mesh, triIdx);
 			break;
 		}
 		
-		RenderTriangle(mesh);
+		RenderTriangle();
 	}
 }
 
-void Renderer::RenderTriangle(const Mesh& mesh)
+void Renderer::RenderTriangle()
 {
 	// Calculate area of triangle
 	const Vector2 edge1{ m_TriangleVertexVec[1].position - m_TriangleVertexVec[0].position };
@@ -219,8 +223,11 @@ Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
 		static_cast<uint8_t>(color.b * 255));
 }
 
-Rect Renderer::GetBoundingBox() const
+Rect Renderer::GetBoundingBox() const noexcept
 {
+	if (m_TriangleVertexVec.empty())
+		return {};
+
 	Vector2 bottomLeft{ m_TriangleVertexVec[0].position };
 	Vector2 topRight{ m_TriangleVertexVec[0].position };
 
@@ -235,24 +242,37 @@ Rect Renderer::GetBoundingBox() const
 	return Rect{ bottomLeft, topRight };
 }
 
-int Renderer::GetNrStripTris(const std::vector<uint32_t>& indices) const
+int Renderer::GetNrStrips(const std::vector<uint32_t>& indices) const
 {
-	int nrOfStrips{};
+	int nrOfDoubles{};
 	int prevNr{ -1 };
 
 	for (uint32_t idx : indices)
 	{
 		if (prevNr == idx)
-			++nrOfStrips;
+			++nrOfDoubles;
 		prevNr = idx;
 	}
 
 	// there will always be two doubles per degenerate tri so divide by 2
-	return static_cast<int>(indices.size()) - nrOfStrips / 2;
+	return nrOfDoubles / 2;
 }
 
 bool Renderer::IsDegenerate(const Mesh& mesh, int triIdx)
 {
+	int prevNr{ -1 };
+
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	{
+		const int offset{ triIdx + vertexIdx };
+
+		if (prevNr == mesh.indices[offset])
+			return true;
+
+		prevNr = mesh.indices[offset];
+	}
+
+	return false;
 }
 
 void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)
@@ -266,10 +286,21 @@ void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)
 
 void Renderer::FillTriangleStrip(const Mesh& mesh, int triIdx)
 {
-	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+
+	const bool isEven{ triIdx % 2 == 0 };
+	if (isEven)
 	{
-		const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
-		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+		{
+			const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
+			m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
+		}
+	}
+	else
+	{
+		m_TriangleVertexVec[0] = mesh.vertices_out[mesh.indices[triIdx]];
+		m_TriangleVertexVec[1] = mesh.vertices_out[mesh.indices[triIdx + 2]];
+		m_TriangleVertexVec[2] = mesh.vertices_out[mesh.indices[triIdx + 1]];
 	}
 }
 

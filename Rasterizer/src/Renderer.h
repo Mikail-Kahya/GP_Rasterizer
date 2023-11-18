@@ -38,7 +38,7 @@ namespace dae
 	private:
 		// Rendering functions
 		void RenderMesh(const Mesh& mesh);
-		void RenderTriangle(const Mesh& mesh);
+		void RenderTriangle();
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in) const;
@@ -50,9 +50,9 @@ namespace dae
 
 		// Helpers
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
-		Rect GetBoundingBox() const;
+		Rect GetBoundingBox() const noexcept;
 
-		int GetNrStripTris(const std::vector<uint32_t>& indices) const;
+		int GetNrStrips(const std::vector<uint32_t>& indices) const;
 		bool IsDegenerate(const Mesh& mesh, int triIdx);
 
 		void FillTriangleList(const Mesh& mesh, int triIdx);
