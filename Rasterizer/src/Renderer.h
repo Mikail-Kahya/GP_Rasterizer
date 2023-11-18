@@ -29,12 +29,12 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Update(Timer* pTimer);
 		void Render();
 
 		bool SaveBufferToImage() const;
 
 		void VertexTransformationFunction(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex>& vertexVec_out) const;
+		void SetScene(Scene* scenePtr) { m_ScenePtr = scenePtr; }
 
 	private:
 		void UpdateBuffer();
@@ -44,6 +44,7 @@ namespace dae
 		Rect GetBoundingBox(const std::vector<Vector3>& vertexVec) const;
 
 		SDL_Window* m_pWindow{};
+		Scene* m_ScenePtr{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
@@ -52,7 +53,6 @@ namespace dae
 		ColorRGB m_ClearColor{};
 		float* m_pDepthBufferPixels{};
 
-		Camera m_Camera{};
 		float m_AspectRatio{};
 
 		int m_Width{};

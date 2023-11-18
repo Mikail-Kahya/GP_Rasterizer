@@ -10,6 +10,7 @@
 //Project includes
 #include "Timer.h"
 #include "Renderer.h"
+#include "Scene.h"
 
 using namespace dae;
 
@@ -43,9 +44,12 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
+	Scene* scenePtr{ new Scene_W6() };
 
 	//Start loop
 	pTimer->Start();
+	scenePtr->Initialize();
+	pRenderer->SetScene(scenePtr);
 
 	// Start Benchmark
 	// TODO pTimer->StartBenchmark();
@@ -72,7 +76,7 @@ int main(int argc, char* args[])
 		}
 
 		//--------- Update ---------
-		pRenderer->Update(pTimer);
+		scenePtr->Update(pTimer);
 
 		//--------- Render ---------
 		pRenderer->Render();

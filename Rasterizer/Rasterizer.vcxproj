@@ -166,10 +166,12 @@ xcopy "$(ProjectDir)Resources\" "$(OutDir)\Resources\" /y /D</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h" />
+    <ClInclude Include="src\Scene.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,6 +4,8 @@
 
 //Project includes
 #include "Renderer.h"
+
+#include "Scene.h"
 #include "Texture.h"
 #include "Utils.h"
 
@@ -27,20 +29,11 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_AspectRatio = static_cast<float>(m_Width) / m_Height;
 	m_TrigVertexVec.resize(nrTrigVertices);
 	m_AreaParallelVec.resize(nrTrigVertices);
-
-	//Initialize Camera
-	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
-
 }
 
 Renderer::~Renderer()
 {
 	delete[] m_pDepthBufferPixels;
-}
-
-void Renderer::Update(Timer* pTimer)
-{
-	m_Camera.Update(pTimer);
 }
 
 void Renderer::Render()
@@ -52,23 +45,13 @@ void Renderer::Render()
 	UpdateBuffer();
 
 	// Setup vertices for screen space
-	std::vector<Vertex> vertices_world
-	{
-		// Triangle 1
-		{{0.f, 2.f, 0.f}, {1, 0, 0}},
-		{{1.5f, -1.f, 0.f}, {1, 0, 0}},
-		{{-1.5f, -1.f, 0.f}, {1, 0 ,0}},
-		// Triangle 2
-		{{0.f, 4.f, 2.f}, {1, 0, 0}},
-		{{3.f, -2.f, 2.f}, {0, 1, 0}},
-		{{-3.f, -2.f, 2.f}, {0, 0 ,1}}
-	};
+	const int nrVertices{ static_cast<int>(m_ScenePtr->GetVertices().size()) };
 	std::vector<Vertex> screenSpaceVec{};
-	screenSpaceVec.resize(vertices_world.size());
-	VertexTransformationFunction(vertices_world, screenSpaceVec);
+	screenSpaceVec.resize(nrVertices);
+	VertexTransformationFunction(m_ScenePtr->GetVertices(), screenSpaceVec);
 
 	const int nrTrigVertices{ 3 };
-	const int nrTrigs{ static_cast<int>(vertices_world.size()) / nrTrigVertices };
+	const int nrTrigs{ nrVertices / nrTrigVertices };
 
 	for (int trigIdx{}; trigIdx < nrTrigs; ++trigIdx)
 	{
@@ -133,17 +116,19 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertexVec
 {
 	//Todo > W1 Projection Stage
 	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
+	const Camera& camera{ m_ScenePtr->GetCamera() };
+
 	for (int idx{}; idx < nrVertices; ++idx)
 	{
-		Vector3 vertex{ m_Camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
+		Vector3 vertex{ camera.worldToCamera.TransformPoint(vertexVec_in[idx].position) };
 
 		// Add perspective
 		vertex.x /= vertex.z;
 		vertex.y /= vertex.z;
 
 		// Account for screen dimensions and fov
-		vertex.x /= m_Camera.fov * m_AspectRatio;
-		vertex.y /= m_Camera.fov;
+		vertex.x /= camera.fov * m_AspectRatio;
+		vertex.y /= camera.fov;
 
 		// NDC (Normalized Device Coordinates) ===> Screen space
 		vertex.x = (vertex.x + 1) * 0.5f * m_Width;

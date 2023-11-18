@@ -81,11 +81,5 @@ namespace dae
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
 	};
-
-	struct TriangleMesh
-	{
-		std::vector<Triangle> triangleVec{};
-		Matrix worldMatrix{};
-	};
 	
 }
