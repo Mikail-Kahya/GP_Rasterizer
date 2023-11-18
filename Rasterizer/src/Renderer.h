@@ -38,6 +38,7 @@ namespace dae
 	private:
 		// Rendering functions
 		void RenderMesh(const Mesh& mesh);
+		void RenderTriangle(const Mesh& mesh);
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in) const;
@@ -49,8 +50,13 @@ namespace dae
 
 		// Helpers
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
-		Rect GetBoundingBox(const std::vector<Vector3>& vertexVec) const;
-		int GetNrStripVertices(const std::vector<uint32_t>& indices) const;
+		Rect GetBoundingBox() const;
+
+		int GetNrStripTris(const std::vector<uint32_t>& indices) const;
+		bool IsDegenerate(const Mesh& mesh, int triIdx);
+
+		void FillTriangleList(const Mesh& mesh, int triIdx);
+		void FillTriangleStrip(const Mesh& mesh, int triIdx);
 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};
@@ -68,7 +74,7 @@ namespace dae
 		int m_Height{};
 
 		// Vectors here to prevent allocation on every frame
-		std::vector<Vector3> m_TrigVertexVec{};
+		std::vector<Vertex_Out> m_TriangleVertexVec{};
 		std::vector<float> m_AreaParallelVec{};
 
 		// constants to prevent retyping

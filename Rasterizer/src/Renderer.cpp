@@ -25,7 +25,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	m_AspectRatio = static_cast<float>(m_Width) / m_Height;
-	m_TrigVertexVec.resize(NR_TRI_VERTS);
+	m_TriangleVertexVec.resize(NR_TRI_VERTS);
 	m_AreaParallelVec.resize(NR_TRI_VERTS);
 }
 
@@ -107,76 +107,79 @@ Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in) const
 
 void Renderer::RenderMesh(const Mesh& mesh)
 {
-	int nrVertices{};
+	int nrTris{};
 
 	switch (mesh.primitiveTopology)
 	{
 	case PrimitiveTopology::TriangleList:
-		nrVertices = static_cast<int>(mesh.indices.size());
+		nrTris = static_cast<int>(mesh.indices.size()) / NR_TRI_VERTS;
 		break;
 	case PrimitiveTopology::TriangleStrip:
-		nrVertices = GetNrStripVertices(mesh.indices);
+		nrTris = GetNrStripTris(mesh.indices);
 		break;
 	}
 
-	//const int nrVertices{ static_cast<int>(mesh.indices.size()) };
-	const int nrTrigs{ nrVertices / NR_TRI_VERTS };
-
-	for (int trigIdx{}; trigIdx < nrTrigs; ++trigIdx)
+	for (int triIdx{}; triIdx < nrTris; ++triIdx)
 	{
-		const bool isEven{ trigIdx % 2 == 0 };
-		int vertexOffset{trigIdx * NR_TRI_VERTS };
-
 		// Fill up the current triangle
-		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+		switch (mesh.primitiveTopology)
 		{
-			const uint32_t indicesIdx{ mesh.indices[trigIdx * NR_TRI_VERTS + vertexIdx] };
-			m_TrigVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx].position;
+		case PrimitiveTopology::TriangleList:
+			FillTriangleList(mesh, triIdx);
+			break;
+		case PrimitiveTopology::TriangleStrip:
+			FillTriangleStrip(mesh, triIdx);
+			break;
 		}
+		
+		RenderTriangle(mesh);
+	}
+}
 
-		// Calculate area of triangle
-		const Vector2 edge1{ m_TrigVertexVec[1] - m_TrigVertexVec[0] };
-		const Vector2 edge2{ m_TrigVertexVec[2] - m_TrigVertexVec[0] };
-		const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
+void Renderer::RenderTriangle(const Mesh& mesh)
+{
+	// Calculate area of triangle
+	const Vector2 edge1{ m_TriangleVertexVec[1].position - m_TriangleVertexVec[0].position };
+	const Vector2 edge2{ m_TriangleVertexVec[2].position - m_TriangleVertexVec[0].position };
+	const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
 
-		const Rect boundingBox{ GetBoundingBox(m_TrigVertexVec) };
+	const Rect boundingBox{ GetBoundingBox() };
 
-		// Clamp bounding box to not be any negative values (out of screen)
-		const int startX{ std::clamp(boundingBox.x, 0, m_Width) };
-		const int startY{ std::clamp(boundingBox.y, 0, m_Height) };
-		const int endX{ std::clamp(boundingBox.x + boundingBox.width, 0, m_Width) };
-		const int endY{ std::clamp(boundingBox.y + boundingBox.height, 0, m_Height) };
+	// Clamp bounding box to not be any negative values (out of screen)
+	const int startX{ std::clamp(boundingBox.x, 0, m_Width) };
+	const int startY{ std::clamp(boundingBox.y, 0, m_Height) };
+	const int endX{ std::clamp(boundingBox.x + boundingBox.width, 0, m_Width) };
+	const int endY{ std::clamp(boundingBox.y + boundingBox.height, 0, m_Height) };
 
-		for (int px{ startX }; px < endX; ++px)
+	for (int px{ startX }; px < endX; ++px)
+	{
+		const float screenX{ px + 0.5f };
+
+		for (int py{ startY }; py < endY; ++py)
 		{
-			const float screenX{ px + 0.5f };
+			ColorRGB finalColor{ };
+			float pixelDepth{};
 
-			for (int py{ startY }; py < endY; ++py)
+			const float screenY{ py + 0.5f };
+			const Vector3 pixelPos{ screenX, screenY, 1 };
+
+			// Checks whether or not the pixel is in the triangle and fills areaParallelVec
+			const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TriangleVertexVec, pixelPos, m_AreaParallelVec) };
+
+			if (!inTriangle)
+				continue;
+
+			// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
+			for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 			{
-				ColorRGB finalColor{ };
-				float pixelDepth{};
+				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
+				const Vertex_Out& vertex{ m_TriangleVertexVec[interpolateIdx] };
 
-				const float screenY{ py + 0.5f };
-				const Vector3 pixelPos{ screenX, screenY, 1 };
-
-				// Checks whether or not the pixel is in the triangle and fills areaParallelVec
-				const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TrigVertexVec, pixelPos, m_AreaParallelVec) };
-
-				if (!inTriangle)
-					continue;
-
-				// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
-				for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
-				{
-					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
-					const Vertex_Out& vertex{ mesh.vertices_out[(trigIdx * NR_TRI_VERTS + interpolateIdx)] };
-
-					finalColor += vertex.color * weight;
-					pixelDepth += vertex.position.z * weight;
-				}
-				if (AddPixelToDepthBuffer(pixelDepth, px, py))
-					AddPixelToRGBBuffer(finalColor, px, py);
+				finalColor += vertex.color * weight;
+				pixelDepth += vertex.position.z * weight;
 			}
+			if (AddPixelToDepthBuffer(pixelDepth, px, py))
+				AddPixelToRGBBuffer(finalColor, px, py);
 		}
 	}
 }
@@ -216,23 +219,23 @@ Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
 		static_cast<uint8_t>(color.b * 255));
 }
 
-Rect Renderer::GetBoundingBox(const std::vector<Vector3>&vertexVec) const
+Rect Renderer::GetBoundingBox() const
 {
-	Vector2 bottomLeft{ vertexVec[0] };
-	Vector2 topRight{ vertexVec[0] };
+	Vector2 bottomLeft{ m_TriangleVertexVec[0].position };
+	Vector2 topRight{ m_TriangleVertexVec[0].position };
 
-	for (const Vector3& vertex : vertexVec)
+	for (const Vertex_Out& vertex : m_TriangleVertexVec)
 	{
-		bottomLeft.x = std::min(bottomLeft.x, vertex.x);
-		bottomLeft.y = std::min(bottomLeft.y, vertex.y);
-		topRight.x = std::max(topRight.x, vertex.x);
-		topRight.y = std::max(topRight.y, vertex.y);
+		bottomLeft.x = std::min(bottomLeft.x, vertex.position.x);
+		bottomLeft.y = std::min(bottomLeft.y, vertex.position.y);
+		topRight.x = std::max(topRight.x, vertex.position.x);
+		topRight.y = std::max(topRight.y, vertex.position.y);
 	}
 
 	return Rect{ bottomLeft, topRight };
 }
 
-int Renderer::GetNrStripVertices(const std::vector<uint32_t>& indices) const
+int Renderer::GetNrStripTris(const std::vector<uint32_t>& indices) const
 {
 	int nrOfStrips{};
 	int prevNr{ -1 };
@@ -246,6 +249,28 @@ int Renderer::GetNrStripVertices(const std::vector<uint32_t>& indices) const
 
 	// there will always be two doubles per degenerate tri so divide by 2
 	return static_cast<int>(indices.size()) - nrOfStrips / 2;
+}
+
+bool Renderer::IsDegenerate(const Mesh& mesh, int triIdx)
+{
+}
+
+void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)
+{
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	{
+		const uint32_t indicesIdx{ mesh.indices[triIdx * NR_TRI_VERTS + vertexIdx] };
+		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
+	}
+}
+
+void Renderer::FillTriangleStrip(const Mesh& mesh, int triIdx)
+{
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	{
+		const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
+		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
+	}
 }
 
 bool Renderer::SaveBufferToImage() const

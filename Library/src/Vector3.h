@@ -37,6 +37,7 @@ namespace dae
 		Vector3 operator/(float scale) const;
 		Vector3 operator+(const Vector3& v) const;
 		Vector3 operator-(const Vector3& v) const;
+		Vector3 operator-(const Vector4& v) const;
 		Vector3 operator-() const;
 		//Vector3& operator-();
 		Vector3& operator+=(const Vector3& v);

@@ -111,6 +111,11 @@ namespace dae {
 		return { x - v.x, y - v.y, z - v.z };
 	}
 
+	Vector3 Vector3::operator-(const Vector4& v) const
+	{
+		return { x - v.x, y - v.y, z - v.z };
+	}
+
 	Vector3 Vector3::operator-() const
 	{
 		return { -x ,-y,-z };
