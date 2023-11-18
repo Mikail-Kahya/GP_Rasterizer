@@ -24,11 +24,9 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
-	const int nrTrigVertices{ 3 };
-
 	m_AspectRatio = static_cast<float>(m_Width) / m_Height;
-	m_TrigVertexVec.resize(nrTrigVertices);
-	m_AreaParallelVec.resize(nrTrigVertices);
+	m_TrigVertexVec.resize(NR_TRI_VERTS);
+	m_AreaParallelVec.resize(NR_TRI_VERTS);
 }
 
 Renderer::~Renderer()
@@ -48,7 +46,7 @@ void Renderer::Render()
 	for (Mesh& mesh : m_ScenePtr->GetMeshes())
 		mesh.vertices_out.clear();
 
-	VertexTransform(m_ScenePtr->GetMeshes());
+	VerticesTransform(m_ScenePtr->GetMeshes());
 
 	for (const Mesh& mesh : m_ScenePtr->GetMeshes())
 		RenderMesh(mesh.vertices_out);
@@ -60,57 +58,68 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::VertexTransform(std::vector<Mesh>& meshVec) const
+void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 {
 	for (Mesh& mesh : meshVec)
-		VertexTransform(mesh.vertices, mesh.vertices_out);
+	{
+		const int nrTris{ static_cast<int>(mesh.indices.size()) / NR_TRI_VERTS };
+
+		for (int triIdx{}; triIdx < nrTris; ++triIdx)
+		{
+			const int vertexOffset{ NR_TRI_VERTS * triIdx };
+			const int vertexEnd{ vertexOffset + NR_TRI_VERTS };
+
+			for(int indicesIdx{ vertexOffset }; indicesIdx < vertexEnd; ++indicesIdx)
+			{
+				// Get vertex from indices
+				const uint32_t vertexIdx{ mesh.indices[indicesIdx] };
+				Vertex_Out vertex{ VertexTransform(mesh.vertices[vertexIdx]) };
+				mesh.vertices_out.push_back(std::move(vertex));
+			}
+		}
+	}
 }
 
-void Renderer::VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const
+Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in) const
 {
 	//Todo > W1 Projection Stage
-	const int nrVertices{ static_cast<int>(vertexVec_in.size()) };
 	const Camera& camera{ m_ScenePtr->GetCamera() };
 
-	for (int idx{}; idx < nrVertices; ++idx)
-	{
-		Vector4 vertex{ camera.worldToCamera.TransformPoint({vertexVec_in[idx].position, 0}) };
+	Vector4 pos{ camera.worldToCamera.TransformPoint({vertex_in.position, 0}) };
 
-		// Add perspective
-		vertex.x /= vertex.z;
-		vertex.y /= vertex.z;
+	// Add perspective
+	pos.x /= pos.z;
+	pos.y /= pos.z;
 
-		// Account for screen dimensions and fov
-		vertex.x /= camera.fov * m_AspectRatio;
-		vertex.y /= camera.fov;
+	// Account for screen dimensions and fov
+	pos.x /= camera.fov * m_AspectRatio;
+	pos.y /= camera.fov;
 
-		// NDC (Normalized Device Coordinates) ===> Screen space
-		vertex.x = (vertex.x + 1) * 0.5f * m_Width;
-		vertex.y = (1 - vertex.y) * 0.5f * m_Height;
+	// NDC (Normalized Device Coordinates) ===> Screen space
+	pos.x = (pos.x + 1) * 0.5f * m_Width;
+	pos.y = (1 - pos.y) * 0.5f * m_Height;
 
-		vertexVec_out[idx].position = vertex;
-		vertexVec_out[idx].color = vertexVec_in[idx].color;
-	}
+	return { pos, vertex_in.color };
 }
 
 void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
 {
-	const int nrVertices{ static_cast<int>(m_ScenePtr->GetVertices().size()) };
-	const int nrTrigVertices{ 3 };
-	const int nrTrigs{ nrVertices / nrTrigVertices };
+	const int nrVertices{ static_cast<int>(screenSpaceVec.size()) };
+	const int nrTrigs{ nrVertices / NR_TRI_VERTS };
 
 	for (int trigIdx{}; trigIdx < nrTrigs; ++trigIdx)
 	{
 		const bool isEven{ trigIdx % 2 == 0 };
+		int vertexOffset{trigIdx * NR_TRI_VERTS };
 
 		// Fill up the current triangle
-		for (int vertexIdx{}; vertexIdx < nrTrigVertices; ++vertexIdx)
-			m_TrigVertexVec[vertexIdx] = screenSpaceVec[trigIdx * nrTrigVertices + vertexIdx].position;
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+			m_TrigVertexVec[vertexIdx] = screenSpaceVec[trigIdx * NR_TRI_VERTS + vertexIdx].position;
 
 		// Calculate area of triangle
 		const Vector2 edge1{ m_TrigVertexVec[1] - m_TrigVertexVec[0] };
 		const Vector2 edge2{ m_TrigVertexVec[2] - m_TrigVertexVec[0] };
-		const float areaTrig{ Vector2::Cross(edge1, edge2) / 2 };
+		const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
 
 		const Rect boundingBox{ GetBoundingBox(m_TrigVertexVec) };
 
@@ -139,10 +148,10 @@ void Renderer::RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec)
 					continue;
 
 				// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
-				for (int interpolateIdx{}; interpolateIdx < nrTrigVertices; ++interpolateIdx)
+				for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 				{
-					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTrig };
-					const Vertex_Out& vertex{ screenSpaceVec[(trigIdx * nrTrigVertices + interpolateIdx)] };
+					const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
+					const Vertex_Out& vertex{ screenSpaceVec[(trigIdx * NR_TRI_VERTS + interpolateIdx)] };
 
 					finalColor += vertex.color * weight;
 					pixelDepth += vertex.position.z * weight;

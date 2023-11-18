@@ -44,7 +44,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
-	Scene* scenePtr{ new Scene_W6() };
+	Scene* scenePtr{ new Scene_W7_List() };
 
 	//Start loop
 	pTimer->Start();

@@ -34,7 +34,7 @@ namespace dae
 		Matrix cameraToWorld{};
 
 		// in degrees
-		float rotateSpeed{ 720.f };
+		float rotateSpeed{ 360.f };
 		float moveSpeed{ 20.f };
 
 		void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})

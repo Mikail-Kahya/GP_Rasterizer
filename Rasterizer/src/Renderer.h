@@ -39,8 +39,8 @@ namespace dae
 		// Rendering functions
 		void RenderMesh(const std::vector<Vertex_Out>& screenSpaceVec);
 
-		void VertexTransform(std::vector<Mesh>& meshVec) const;
-		void VertexTransform(const std::vector<Vertex>& vertexVec_in, std::vector<Vertex_Out>& vertexVec_out) const;
+		void VerticesTransform(std::vector<Mesh>& meshVec) const;
+		Vertex_Out VertexTransform(const Vertex& vertex_in) const;
 
 		// Buffer functions
 		void UpdateBuffer();
@@ -69,5 +69,8 @@ namespace dae
 		// Vectors here to prevent allocation on every frame
 		std::vector<Vector3> m_TrigVertexVec{};
 		std::vector<float> m_AreaParallelVec{};
+
+		// constants to prevent retyping
+		const int NR_TRI_VERTS{ 3 };
 	};
 }
