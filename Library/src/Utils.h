@@ -13,7 +13,7 @@ namespace dae
 	{
 #pragma region Triangle HitTest	
 		//TRIANGLE HIT-TESTS
-		inline bool PixelInTriangle(const std::vector<Vertex_Out>& vertexVec, const Vector3& pixelPos, std::vector<float>& areaParallelVec)
+		inline bool PixelInTriangle(const std::vector<Vertex_Out>& vertexVec, const Vector3& pixelPos, std::vector<float>& areaParallelVec, bool clockWise = true)
 		{
 			const int nrVertices{ static_cast<int>(vertexVec.size()) };
 
@@ -23,7 +23,7 @@ namespace dae
 
 				const Vector2 vertexToPixel{ vertexVec[idx].position - pixelPos };
 				const Vector2 edge{ vertexVec[idx].position - vertexVec[idx2].position };
-				const float areaParallel{ Vector2::Cross(edge, vertexToPixel) };
+				const float areaParallel = (clockWise) ? Vector2::Cross(edge, vertexToPixel) : Vector2::Cross(vertexToPixel, edge);
 
 				if (areaParallel < 0)
 					return false;

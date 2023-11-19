@@ -134,7 +134,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 	const Rect boundingBox{ GetBoundingBox() };
 	ColorRGB finalColor{};
 
-	// Clamp bounding box to not be any negative values (out of screen)
+	// Clamp bounding box to screen
 	const int startX{ std::clamp(boundingBox.x, 0, m_Width) };
 	const int startY{ std::clamp(boundingBox.y, 0, m_Height) };
 	const int endX{ std::clamp(boundingBox.x + boundingBox.width, 0, m_Width) };
@@ -184,11 +184,12 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 void Renderer::UpdateBuffer()
 {
-	const int nrPixels{ m_Width * m_Height };
+	/*const int nrPixels{ m_Width * m_Height };
 	for (int idx{}; idx < nrPixels; ++idx)
-		m_pDepthBufferPixels[idx] = std::numeric_limits<float>::max();
+		m_pDepthBufferPixels[idx] = std::numeric_limits<float>::max();*/
 
 	SDL_FillRect(m_pBackBuffer, nullptr, GetSDLRGB(m_ClearColor));
+	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
 }
 
 void Renderer::AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const
