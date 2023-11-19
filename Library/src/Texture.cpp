@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <cassert>
+#include <sstream>
 
 #include "Vector2.h"
 #include <SDL_image.h>
@@ -26,9 +27,12 @@ namespace dae
 	{
 		//TODO
 		//Load SDL_Surface using IMG_LOAD
-		SDL_Surface* surfacePtr{ IMG_Load(path.c_str()) };
+		std::stringstream buffer;
+		buffer << "./Resources/";
+		buffer << path;
 
-		assert(surfacePtr == nullptr && "No image found with the path: " + path);
+		SDL_Surface* surfacePtr{ IMG_Load(buffer.str().c_str()) };
+
 		//Create & Return a new Texture Object (using SDL_Surface)
 
 		return new Texture{ surfacePtr };

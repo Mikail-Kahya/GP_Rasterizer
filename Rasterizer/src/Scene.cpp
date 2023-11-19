@@ -1,9 +1,22 @@
 #include "Scene.h"
+
+#include "Texture.h"
 #include "Utils.h"
 
 namespace dae {
 
 #pragma region SCENE W6
+	Scene::~Scene()
+	{
+        for (Texture* texturePtr : m_TexturePtrVec)
+            delete texturePtr;
+	}
+
+	void Scene::AddTexture(const std::string& path)
+	{
+        m_TexturePtrVec.push_back(Texture::LoadFromFile(path));
+	}
+
 	void Scene_W6::Initialize()
 	{
 		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
@@ -54,7 +67,7 @@ namespace dae {
 	{
         m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
-		m_MeshVec = {
+        m_MeshVec = {
             Mesh
             {
                 {
@@ -75,9 +88,14 @@ namespace dae {
                     6, 3, 7,
                     4, 8, 5
                 },
-                PrimitiveTopology::TriangleStrip
+                PrimitiveTopology::TriangleStrip,
             }
         };
+
+        AddTexture("uv_grid.png");
+
+        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+        
 	}
 #pragma endregion
 }

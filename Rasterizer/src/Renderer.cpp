@@ -124,7 +124,7 @@ void Renderer::RenderMesh(const Mesh& mesh)
 	}
 }
 
-void Renderer::RenderTriangle()
+void Renderer::RenderTriangle(Texture* texturePtr)
 {
 	// Calculate area of triangle
 	const Vector2 edge1{ m_TriangleVertexVec[1].position - m_TriangleVertexVec[0].position };

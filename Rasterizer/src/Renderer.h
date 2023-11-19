@@ -38,7 +38,7 @@ namespace dae
 	private:
 		// Rendering functions
 		void RenderMesh(const Mesh& mesh);
-		void RenderTriangle();
+		void RenderTriangle(Texture* texturePtr);
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in) const;

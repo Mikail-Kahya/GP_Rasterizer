@@ -2,18 +2,19 @@
 #include <string>
 #include <vector>
 
-#include "Math.h"
 #include "DataTypes.h"
 #include "Camera.h"
 
 namespace dae
 {
+	class Texture;
+
 	//Scene Base Class
 	class Scene
 	{
 	public:
 		Scene() = default;
-		virtual ~Scene() = default;
+		virtual ~Scene();
 
 		Scene(const Scene&) = delete;
 		Scene(Scene&&) noexcept = delete;
@@ -29,13 +30,18 @@ namespace dae
 		const Camera& GetCamera() { return m_Camera; }
 		const std::vector<Vertex>& GetVertices() const { return m_VertexVec; }
 		std::vector<Mesh>& GetMeshes() { return m_MeshVec; }
+		const std::vector<Texture*>& GetTextures() const { return m_TexturePtrVec; }
 
 	protected:
+		void AddTexture(const std::string& path);
+
 		std::string	sceneName;
+		Camera m_Camera{};
 
 		std::vector<Vertex> m_VertexVec{};
 		std::vector<Mesh> m_MeshVec{};
-		Camera m_Camera{};
+
+		std::vector<Texture*> m_TexturePtrVec{};
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++

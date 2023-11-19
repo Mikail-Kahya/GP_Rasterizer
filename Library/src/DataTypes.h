@@ -4,6 +4,8 @@
 
 namespace dae
 {
+	class Texture;
+
 	struct Vertex
 	{
 		Vector3 position{};
@@ -80,6 +82,7 @@ namespace dae
 
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
+		Texture* texturePtr{};
 	};
 	
 }
