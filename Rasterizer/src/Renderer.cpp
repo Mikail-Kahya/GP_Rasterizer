@@ -132,6 +132,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 	const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
 
 	const Rect boundingBox{ GetBoundingBox() };
+	ColorRGB finalColor{};
 
 	// Clamp bounding box to not be any negative values (out of screen)
 	const int startX{ std::clamp(boundingBox.x, 0, m_Width) };
@@ -145,7 +146,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 		for (int py{ startY }; py < endY; ++py)
 		{
-			ColorRGB finalColor{ };
+			
 			float pixelDepth{};
 			Vector2 UVCoord{};
 
@@ -164,10 +165,14 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
 				const Vertex_Out& vertex{ m_TriangleVertexVec[interpolateIdx] };
 
-				finalColor += vertex.color * weight;
-				pixelDepth += vertex.position.z * weight;
-				UVCoord += vertex.uv * weight;
+				//finalColor += vertex.color * weight;
+				pixelDepth += 1 / vertex.position.z * weight;
+				UVCoord += vertex.uv / vertex.position.z * weight;
 			}
+
+			// Done for proper depth buffer
+			pixelDepth = 1 / pixelDepth;
+			UVCoord *= pixelDepth;
 
 			finalColor = texturePtr->Sample(UVCoord);
 

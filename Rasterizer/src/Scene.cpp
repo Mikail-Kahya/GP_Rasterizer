@@ -93,7 +93,7 @@ namespace dae {
         };
 
 
-        AddTexture("uv_grid.png");
+        AddTexture("uv_grid_2.png");
 
         m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
         
