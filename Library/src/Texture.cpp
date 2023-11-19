@@ -38,16 +38,17 @@ namespace dae
 	{
 		//TODO
 		//Sample the correct texel for the given uv
-		const int idx{ static_cast<int>(uv.x * uv.y) };
+		const int x{ static_cast<int>(m_pSurface->w * uv.x) % m_pSurface->w };
+		const int y{ static_cast<int>(m_pSurface->h * uv.y) & m_pSurface->h };
 
-		assert(idx < 0 && "Sampling out of range");
+		uint8_t r, g, b;
 
-		const uint32_t sdlColor{ m_pSurfacePixels[idx] };
+		SDL_GetRGB(m_pSurfacePixels[x * y], m_pSurface->format, &r, &g, &b);
 
 		return {
-			(sdlColor & 255) / 255.f,
-			(sdlColor >> 8 & 255) / 255.f,
-			(sdlColor >> 16 & 255) / 255.f
+			r / 255.f ,
+			g / 255.f,
+			b / 255.f
 		};
 	}
 }
