@@ -86,7 +86,7 @@ Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in) const
 	pos.x = (pos.x + 1) * 0.5f * m_Width;
 	pos.y = (1 - pos.y) * 0.5f * m_Height;
 
-	return { pos, vertex_in.color };
+	return { pos, vertex_in.color, vertex_in.uv };
 }
 
 void Renderer::RenderMesh(const Mesh& mesh)
@@ -120,7 +120,7 @@ void Renderer::RenderMesh(const Mesh& mesh)
 			break;
 		}
 		
-		RenderTriangle();
+		RenderTriangle(mesh.texturePtr);
 	}
 }
 
@@ -147,6 +147,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 		{
 			ColorRGB finalColor{ };
 			float pixelDepth{};
+			Vector2 UVCoord{};
 
 			const float screenY{ py + 0.5f };
 			const Vector3 pixelPos{ screenX, screenY, 1 };
@@ -165,7 +166,11 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 				finalColor += vertex.color * weight;
 				pixelDepth += vertex.position.z * weight;
+				UVCoord += vertex.uv * weight;
 			}
+
+			finalColor = texturePtr->Sample(UVCoord);
+
 			if (AddPixelToDepthBuffer(pixelDepth, px, py))
 				AddPixelToRGBBuffer(finalColor, px, py);
 		}

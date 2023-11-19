@@ -43,15 +43,15 @@ namespace dae {
             Mesh
             {
                 {
-                    Vertex{{-3, 3, -2}},
-                    Vertex{{ 0,  3, -2}},
-                    Vertex{{ 3,  3, -2}},
-                    Vertex{{-3,  0, -2}},
-                    Vertex{{ 0,  0, -2}},
-                    Vertex{{ 3,  0, -2}},
-                    Vertex{{-3, -3, -2}},
-                    Vertex{{ 0, -3, -2}},
-                    Vertex{{ 3, -3, -2}}
+                    Vertex{{-3,  3, -2}, {colors::White}, {0.0f, 0.0f}},
+                    Vertex{{ 0,  3, -2}, {colors::White}, {0.5f, 0.0f}},
+                    Vertex{{ 3,  3, -2}, {colors::White}, {1.0f, 0.0f}},
+                    Vertex{{-3,  0, -2}, {colors::White}, {0.0f, 0.5f}},
+                    Vertex{{ 0,  0, -2}, {colors::White}, {0.5f, 0.5f}},
+                    Vertex{{ 3,  0, -2}, {colors::White}, {1.0f, 0.5f}},
+                    Vertex{{-3, -3, -2}, {colors::White}, {0.0f, 1.0f}},
+                    Vertex{{ 0, -3, -2}, {colors::White}, {0.5f, 1.0f}},
+                    Vertex{{ 3, -3, -2}, {colors::White}, {1.0f, 1.0f}}
                 },
                 {
                     3, 0, 1,    1, 4, 3,    4, 1, 2,
@@ -71,15 +71,15 @@ namespace dae {
             Mesh
             {
                 {
-                    Vertex{{-3, 3, -2}},
-                    Vertex{{ 0,  3, -2}},
-                    Vertex{{ 3,  3, -2}},
-                    Vertex{{-3,  0, -2}},
-                    Vertex{{ 0,  0, -2}},
-                    Vertex{{ 3,  0, -2}},
-                    Vertex{{-3, -3, -2}},
-                    Vertex{{ 0, -3, -2}},
-                    Vertex{{ 3, -3, -2}}
+                    Vertex{{-3,  3, -2}, {colors::White}, {0.0f, 0.0f}},
+                    Vertex{{ 0,  3, -2}, {colors::White}, {0.5f, 0.0f}},
+                    Vertex{{ 3,  3, -2}, {colors::White}, {1.0f, 0.0f}},
+                    Vertex{{-3,  0, -2}, {colors::White}, {0.0f, 0.5f}},
+                    Vertex{{ 0,  0, -2}, {colors::White}, {0.5f, 0.5f}},
+                    Vertex{{ 3,  0, -2}, {colors::White}, {1.0f, 0.5f}},
+                    Vertex{{-3, -3, -2}, {colors::White}, {0.0f, 1.0f}},
+                    Vertex{{ 0, -3, -2}, {colors::White}, {0.5f, 1.0f}},
+                    Vertex{{ 3, -3, -2}, {colors::White}, {1.0f, 1.0f}}
                 },
                 {
                     3, 0, 4,
@@ -91,6 +91,7 @@ namespace dae {
                 PrimitiveTopology::TriangleStrip,
             }
         };
+
 
         AddTexture("uv_grid.png");
 

@@ -33,6 +33,11 @@ namespace dae
 
 		SDL_Surface* surfacePtr{ IMG_Load(buffer.str().c_str()) };
 
+		buffer << " is not found";
+
+		if (surfacePtr == nullptr)
+			throw TextureNotFoundException();
+
 		//Create & Return a new Texture Object (using SDL_Surface)
 
 		return new Texture{ surfacePtr };
@@ -42,12 +47,14 @@ namespace dae
 	{
 		//TODO
 		//Sample the correct texel for the given uv
-		const int x{ static_cast<int>(m_pSurface->w * uv.x) % m_pSurface->w };
-		const int y{ static_cast<int>(m_pSurface->h * uv.y) & m_pSurface->h };
+		const uint32_t x{ static_cast<uint32_t>(m_pSurface->w * abs(uv.x)) % m_pSurface->w };
+		const uint32_t y{ static_cast<uint32_t>(m_pSurface->h * abs(uv.y)) % m_pSurface->h };
 
 		uint8_t r, g, b;
 
-		SDL_GetRGB(m_pSurfacePixels[x * y], m_pSurface->format, &r, &g, &b);
+		const size_t idx{y * m_pSurface->w + x};
+
+		SDL_GetRGB(m_pSurfacePixels[idx], m_pSurface->format, &r, &g, &b);
 
 		return {
 			r / 255.f ,

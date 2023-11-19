@@ -21,4 +21,6 @@ namespace dae
 		SDL_Surface* m_pSurface{ nullptr };
 		uint32_t* m_pSurfacePixels{ nullptr };
 	};
+
+	class TextureNotFoundException{};
 }
