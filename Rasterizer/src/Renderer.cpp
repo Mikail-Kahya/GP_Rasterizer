@@ -162,8 +162,9 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
 			for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 			{
+				const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
 				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
-				const Vertex_Out& vertex{ m_TriangleVertexVec[interpolateIdx] };
+				const Vertex_Out& vertex{ m_TriangleVertexVec[oppositeIdx] };
 
 				//finalColor += vertex.color * weight;
 				pixelDepth += 1 / vertex.position.z * weight;
