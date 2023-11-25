@@ -36,6 +36,8 @@ Renderer::~Renderer()
 
 void Renderer::Render()
 {
+	assert(m_ScenePtr != nullptr && "No scene found");
+
 	//@START
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
@@ -60,31 +62,26 @@ void Renderer::Render()
 
 void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 {
+	const Camera& camera{ m_ScenePtr->GetCamera() };
+
 	for (Mesh& mesh : meshVec)
 	{
+		const Matrix worldViewProjectionMatrix{ mesh.worldMatrix * camera.worldToCamera * camera.projectionMatrix };
+
 		for (Vertex& vertex : mesh.vertices)
-			mesh.vertices_out.push_back(VertexTransform(vertex));
+			mesh.vertices_out.push_back(VertexTransform(vertex, worldViewProjectionMatrix));
 	}
 }
 
-Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in) const
+Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const
 {
 	//Todo > W1 Projection Stage
-	const Camera& camera{ m_ScenePtr->GetCamera() };
-
-	Vector4 pos{ camera.worldToCamera.TransformPoint({vertex_in.position, 0}) };
+	Vector4 pos{ worldViewProjectionMatrix.TransformPoint({vertex_in.position, 0}) };
 
 	// Add perspective
-	pos.x /= pos.z;
-	pos.y /= pos.z;
-
-	// Account for screen dimensions and fov
-	pos.x /= camera.fov * m_AspectRatio;
-	pos.y /= camera.fov;
-
-	// NDC (Normalized Device Coordinates) ===> Screen space
-	pos.x = (pos.x + 1) * 0.5f * m_Width;
-	pos.y = (1 - pos.y) * 0.5f * m_Height;
+	pos.x /= pos.w;
+	pos.y /= pos.w;
+	pos.z /= pos.w;
 
 	return { pos, vertex_in.color, vertex_in.uv };
 }
@@ -146,7 +143,6 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 		for (int py{ startY }; py < endY; ++py)
 		{
-			
 			float pixelDepth{};
 			Vector2 UVCoord{};
 
@@ -185,10 +181,6 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 void Renderer::UpdateBuffer()
 {
-	/*const int nrPixels{ m_Width * m_Height };
-	for (int idx{}; idx < nrPixels; ++idx)
-		m_pDepthBufferPixels[idx] = std::numeric_limits<float>::max();*/
-
 	SDL_FillRect(m_pBackBuffer, nullptr, GetSDLRGB(m_ClearColor));
 	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
 }
@@ -296,4 +288,10 @@ void Renderer::FillTriangleStrip(const Mesh& mesh, int triIdx)
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
+}
+
+void Renderer::SetScene(Scene* scenePtr)
+{
+	scenePtr->GetCamera().aspectRatio = m_AspectRatio;
+	m_ScenePtr = scenePtr;
 }

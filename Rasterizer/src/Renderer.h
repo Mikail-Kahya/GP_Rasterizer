@@ -33,7 +33,7 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void SetScene(Scene* scenePtr) { m_ScenePtr = scenePtr; }
+		void SetScene(Scene* scenePtr);
 
 	private:
 		// Rendering functions
@@ -41,7 +41,7 @@ namespace dae
 		void RenderTriangle(Texture* texturePtr);
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
-		Vertex_Out VertexTransform(const Vertex& vertex_in) const;
+		Vertex_Out VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const;
 
 		// Buffer functions
 		void UpdateBuffer();
@@ -72,6 +72,11 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		// Matrices
+		float m_RenderDistance{ 100.f };
+		float m_CloseDistance{ 5.f };
+		Matrix m_ProjectionMatrix{};
 
 		// Vectors here to prevent allocation on every frame
 		std::vector<Vertex_Out> m_TriangleVertexVec{};

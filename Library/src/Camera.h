@@ -20,6 +20,7 @@ namespace dae
 
 
 		Vector3 origin{};
+		float aspectRatio{};
 		float fovAngle{90.f};
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
 
@@ -31,11 +32,14 @@ namespace dae
 		float totalYaw{};
 
 		Matrix worldToCamera{};
-		Matrix cameraToWorld{};
+		Matrix projectionMatrix{};
 
 		// in degrees
 		float rotateSpeed{ 360.f };
 		float moveSpeed{ 20.f };
+
+		float zFar{ 100.f };
+		float zNear{ 5.f };
 
 		void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})
 		{
@@ -54,12 +58,6 @@ namespace dae
 			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
 			up = Vector3::Cross(forward, right).Normalized();
 
-			//viewMatrix = Matrix{	{right, 0},
-			//						{up, 0},
-			//						{forward, 0},
-			//						{origin, 1}
-			//					};
-
 			worldToCamera = Matrix::CreateLookAtLH(origin, forward, up, right);
 
 			//ViewMatrix => Matrix::CreateLookAtLH(...) [not implemented yet]
@@ -69,8 +67,7 @@ namespace dae
 		void CalculateProjectionMatrix()
 		{
 			//TODO W3
-
-			//ProjectionMatrix => Matrix::CreatePerspectiveFovLH(...) [not implemented yet]
+			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, zNear, zFar);
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixperspectivefovlh
 		}
 
@@ -103,10 +100,18 @@ namespace dae
 
 			//Update Matrices
 			CalculateViewMatrix();
-			CalculateProjectionMatrix(); //Try to optimize this - should only be called once or when fov/aspectRatio changes
+
+			if (RatiosChanged())
+				CalculateProjectionMatrix();
+
+			oldFov = fov;
+			oldAspectRatio = aspectRatio;
 		}
 
 	private:
+		float oldFov{};
+		float oldAspectRatio{};
+
 		void Move(const uint8_t* keyboardStatePtr, uint32_t mouseState, int mouseY, float deltaTime)
 		{
 			const float movedDistance{ moveSpeed * deltaTime };
@@ -167,6 +172,14 @@ namespace dae
 				origin += forward * movedDistance;
 			else if (mouseY > 0)
 				origin -= forward * movedDistance;
+		}
+
+		bool RatiosChanged() const
+		{
+			if (!AreEqual(fov, oldFov))
+				return true;
+
+			return !AreEqual(aspectRatio, oldAspectRatio);
 		}
 	};
 }
