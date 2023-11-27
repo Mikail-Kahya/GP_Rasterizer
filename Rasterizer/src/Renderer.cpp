@@ -186,9 +186,9 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			UVCoord *= wDepth;
 
 			// Depth view mode
-			zDepth = Remap(0.985f, 1.f, zDepth);
+			const float depthColor{ Remap(0.8f, 1.f, zDepth) };
 
-			finalColor = (m_RenderColor) ? texturePtr->Sample(UVCoord) : ColorRGB{ zDepth, zDepth, zDepth };
+			finalColor = (m_RenderColor) ? texturePtr->Sample(UVCoord) : ColorRGB{ depthColor, depthColor, depthColor };
 
 			if (AddPixelToDepthBuffer(zDepth, px, py))
 				AddPixelToRGBBuffer(finalColor, px, py);
