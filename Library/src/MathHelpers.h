@@ -59,8 +59,8 @@ namespace dae
 	}
 
 	template<typename CompareType>
-	bool InRange(const CompareType& low, const CompareType& high, const CompareType& value)
+	bool InRange(const CompareType& min, const CompareType& max, const CompareType& value)
 	{
-		return value >= low && value <= high;
+		return value >= min && value <= max;
 	}
 }

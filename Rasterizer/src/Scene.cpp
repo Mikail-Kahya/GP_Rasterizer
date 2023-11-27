@@ -17,6 +17,15 @@ namespace dae {
         m_TexturePtrVec.push_back(Texture::LoadFromFile(path));
 	}
 
+	void Scene::AddMesh(const std::string& path)
+	{
+        Mesh mesh{};
+
+        Utils::ParseOBJ("Resources/" + path, mesh.vertices, mesh.indices);
+
+        m_MeshVec.push_back(mesh);
+	}
+
 	void Scene_W6::Initialize()
 	{
 		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
@@ -101,6 +110,24 @@ namespace dae {
 
         m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
         
+	}
+
+	void Scene_W8_TukTuk::Initialize()
+	{
+        AddMesh("tuktuk.obj");
+		AddTexture("tuktuk.png");
+
+        m_MeshVec[0].primitiveTopology = PrimitiveTopology::TriangleList;
+        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+	}
+
+	void Scene_W8_Vehicle::Initialize()
+	{
+        AddMesh("vehicle.obj");
+        AddTexture("vehicle_diffuse.png");
+
+        m_MeshVec[0].primitiveTopology = PrimitiveTopology::TriangleList;
+        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
 	}
 #pragma endregion
 }

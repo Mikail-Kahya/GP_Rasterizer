@@ -44,7 +44,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
-	Scene* scenePtr{ new Scene_W7_List() };
+	Scene* scenePtr{ new Scene_W8_TukTuk() };
 
 	//Start loop
 	pTimer->Start();
@@ -71,6 +71,9 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					pRenderer->ToggleRenderType();
 				break;
 			}
 		}

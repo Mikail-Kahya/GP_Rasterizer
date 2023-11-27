@@ -34,6 +34,7 @@ namespace dae
 
 	protected:
 		void AddTexture(const std::string& path);
+		void AddMesh(const std::string& path);
 
 		std::string	sceneName;
 		Camera m_Camera{};
@@ -92,5 +93,37 @@ namespace dae
 		void Initialize() override;
 	};
 
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 8 Scene
+	class Scene_W8_TukTuk final : public Scene
+	{
+	public:
+		Scene_W8_TukTuk() = default;
+		~Scene_W8_TukTuk() override = default;
+
+		Scene_W8_TukTuk(const Scene_W8_TukTuk&) = delete;
+		Scene_W8_TukTuk(Scene_W8_TukTuk&&) noexcept = delete;
+		Scene_W8_TukTuk& operator=(const Scene_W8_TukTuk&) = delete;
+		Scene_W8_TukTuk& operator=(Scene_W8_TukTuk&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 8 Scene
+	class Scene_W8_Vehicle final : public Scene
+	{
+	public:
+		Scene_W8_Vehicle() = default;
+		~Scene_W8_Vehicle() override = default;
+
+		Scene_W8_Vehicle(const Scene_W8_Vehicle&) = delete;
+		Scene_W8_Vehicle(Scene_W8_Vehicle&&) noexcept = delete;
+		Scene_W8_Vehicle& operator=(const Scene_W8_Vehicle&) = delete;
+		Scene_W8_Vehicle& operator=(Scene_W8_Vehicle&&) noexcept = delete;
+
+		void Initialize() override;
+	};
 	
 }

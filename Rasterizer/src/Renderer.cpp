@@ -106,23 +106,23 @@ void Renderer::RenderMesh(const Mesh& mesh)
 	for (int triIdx{}; triIdx < nrTris; ++triIdx)
 	{
 		if (!InFrustum(mesh, triIdx))
-		{
 			continue;
-		}
-			
 
 		// Fill up the current triangle
 		switch (mesh.primitiveTopology)
 		{
 		case PrimitiveTopology::TriangleList:
-			FillTriangleList(mesh, triIdx);
+			FillTriangle(mesh, triIdx);
 			break;
 		case PrimitiveTopology::TriangleStrip:
 			// Skip degenerate triangles
 			if (IsDegenerate(mesh, triIdx))
 				continue;
 			
-			FillTriangleStrip(mesh, triIdx);
+			FillTriangle(mesh, triIdx);
+
+			if (triIdx % 2 != 0)
+				std::swap(m_TriangleVertexVec[1], m_TriangleVertexVec[2]);
 			break;
 		}
 		
@@ -152,8 +152,8 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 
 		for (int py{ startY }; py < endY; ++py)
 		{
-			float pixelDepth{};
-			float linearDepth{};
+			float zDepth{};
+			float wDepth{};
 			Vector2 UVCoord{};
 
 			const float screenY{ py + 0.5f };
@@ -171,22 +171,26 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 				const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
 				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
 				const Vertex_Out& vertex{ m_TriangleVertexVec[oppositeIdx] };
-				const float currentLinearDepth{ 1 / vertex.position.w * weight };
+				const float newWDepth{ 1 / vertex.position.w * weight };
 
 				//finalColor += vertex.color * weight;
 				
-				linearDepth += currentLinearDepth;
-				pixelDepth += 1 / vertex.position.z * weight;
-				UVCoord += vertex.uv * currentLinearDepth;
+				wDepth += newWDepth;
+				zDepth += 1 / vertex.position.z * weight;
+				UVCoord += vertex.uv * newWDepth;
 			}
 
 			// Done for proper depth buffer
-			pixelDepth = 1 / pixelDepth;
-			UVCoord *= 1 / linearDepth;
+			zDepth = 1 / zDepth;
+			wDepth = 1 / wDepth;
+			UVCoord *= wDepth;
 
-			finalColor = texturePtr->Sample(UVCoord);
+			// Depth view mode
+			zDepth = Remap(0.985f, 1.f, zDepth);
 
-			if (AddPixelToDepthBuffer(pixelDepth, px, py))
+			finalColor = (m_RenderColor) ? texturePtr->Sample(UVCoord) : ColorRGB{ zDepth, zDepth, zDepth };
+
+			if (AddPixelToDepthBuffer(zDepth, px, py))
 				AddPixelToRGBBuffer(finalColor, px, py);
 		}
 	}
@@ -214,6 +218,13 @@ bool Renderer::AddPixelToDepthBuffer(float depth, int x, int y) const
 		m_pDepthBufferPixels[idx] = depth;
 
 	return isCloser;
+}
+
+float Renderer::Remap(float min, float max, float value) const
+{
+	const float range{ max - min };
+	const float multiplier{ 1 / range };
+	return (min - value) * multiplier;
 }
 
 Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
@@ -282,11 +293,14 @@ bool Renderer::InFrustum(const Mesh& mesh, int triIdx)
 	int prevNr{ -1 };
 	const float fWidth{ static_cast<float>(m_Width) };
 	const float fHeight{ static_cast<float>(m_Height) };
+	std::array indexArr{ GetIndices(mesh, triIdx) };
 
 	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
 	{
-		const int offset{ triIdx * NR_TRI_VERTS + vertexIdx };
-		const Vertex_Out& vertex{ mesh.vertices_out[mesh.indices[offset]] };
+		const Vertex_Out& vertex{ mesh.vertices_out[indexArr[vertexIdx]] };
+
+		if (!InRange(0.f, 1.f, vertex.position.z))
+			return false;
 
 		if (!InRange(0.f, fWidth, vertex.position.x))
 			return false;
@@ -298,25 +312,30 @@ bool Renderer::InFrustum(const Mesh& mesh, int triIdx)
 	return true;
 }
 
-void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)
+std::array<uint32_t, Renderer::NR_TRI_VERTS> Renderer::GetIndices(const Mesh& mesh, int triIdx) const
 {
-	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	std::array<uint32_t, NR_TRI_VERTS> indexArr{};
+
+	switch (mesh.primitiveTopology)
 	{
-		const uint32_t indicesIdx{ mesh.indices[triIdx * NR_TRI_VERTS + vertexIdx] };
-		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
+	case PrimitiveTopology::TriangleList:
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+			indexArr[vertexIdx] = mesh.indices[triIdx * NR_TRI_VERTS + vertexIdx];
+		break;
+	case PrimitiveTopology::TriangleStrip:
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+			indexArr[vertexIdx] = mesh.indices[triIdx + vertexIdx];
+		break;
 	}
+
+	return indexArr;
 }
 
-void Renderer::FillTriangleStrip(const Mesh& mesh, int triIdx)
+void Renderer::FillTriangle(const Mesh& mesh, int triIdx)
 {
+	std::array indexArr{ GetIndices(mesh, triIdx) };
 	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-	{
-		const uint32_t indicesIdx{ mesh.indices[triIdx + vertexIdx] };
-		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indicesIdx];
-	}
-	
-	if (triIdx % 2 != 0)
-		std::swap(m_TriangleVertexVec[1], m_TriangleVertexVec[2]);
+		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indexArr[vertexIdx]];
 }
 
 bool Renderer::SaveBufferToImage() const
@@ -328,4 +347,9 @@ void Renderer::SetScene(Scene* scenePtr)
 {
 	scenePtr->GetCamera().aspectRatio = m_AspectRatio;
 	m_ScenePtr = scenePtr;
+}
+
+void Renderer::ToggleRenderType()
+{
+	m_RenderColor = !m_RenderColor;
 }
