@@ -105,6 +105,12 @@ void Renderer::RenderMesh(const Mesh& mesh)
 
 	for (int triIdx{}; triIdx < nrTris; ++triIdx)
 	{
+		if (!InFrustum(mesh, triIdx))
+		{
+			continue;
+		}
+			
+
 		// Fill up the current triangle
 		switch (mesh.primitiveTopology)
 		{
@@ -269,6 +275,27 @@ bool Renderer::IsDegenerate(const Mesh& mesh, int triIdx)
 	}
 
 	return false;
+}
+
+bool Renderer::InFrustum(const Mesh& mesh, int triIdx)
+{
+	int prevNr{ -1 };
+	const float fWidth{ static_cast<float>(m_Width) };
+	const float fHeight{ static_cast<float>(m_Height) };
+
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	{
+		const int offset{ triIdx * NR_TRI_VERTS + vertexIdx };
+		const Vertex_Out& vertex{ mesh.vertices_out[mesh.indices[offset]] };
+
+		if (!InRange(0.f, fWidth, vertex.position.x))
+			return false;
+
+		if (!InRange(0.f, fHeight, vertex.position.y))
+			return false;
+	}
+
+	return true;
 }
 
 void Renderer::FillTriangleList(const Mesh& mesh, int triIdx)

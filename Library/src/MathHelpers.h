@@ -57,4 +57,10 @@ namespace dae
 		if (v > 1.f) return 1.f;
 		return v;
 	}
+
+	template<typename CompareType>
+	bool InRange(const CompareType& low, const CompareType& high, const CompareType& value)
+	{
+		return value >= low && value <= high;
+	}
 }

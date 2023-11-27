@@ -54,6 +54,7 @@ namespace dae
 
 		int GetNrStrips(const std::vector<uint32_t>& indices) const;
 		bool IsDegenerate(const Mesh& mesh, int triIdx);
+		bool InFrustum(const Mesh& mesh, int triIdx);
 
 		void FillTriangleList(const Mesh& mesh, int triIdx);
 		void FillTriangleStrip(const Mesh& mesh, int triIdx);
