@@ -168,7 +168,7 @@ namespace dae {
 		const float B{ -(zf * zn) / (zf - zn) };
 
 		return {
-			{ 1 / aspect * fov, 0, 0, 0 },
+			{ 1 / (aspect * fov), 0, 0, 0 },
 			{0, 1 / fov, 0, 0},
 			{0, 0, A, 1},
 			{ 0, 0, B, 0}

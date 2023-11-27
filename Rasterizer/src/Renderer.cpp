@@ -76,12 +76,15 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const
 {
 	//Todo > W1 Projection Stage
-	Vector4 pos{ worldViewProjectionMatrix.TransformPoint({vertex_in.position, 0}) };
+	Vector4 pos{ worldViewProjectionMatrix.TransformPoint({vertex_in.position, 1}) };
 
 	// Add perspective
 	pos.x /= pos.w;
 	pos.y /= pos.w;
 	pos.z /= pos.w;
+
+	pos.x = (pos.x + 1) * 0.5f * m_Width;
+	pos.y = (1 - pos.y) * 0.5f * m_Height;
 
 	return { pos, vertex_in.color, vertex_in.uv };
 }
@@ -144,6 +147,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 		for (int py{ startY }; py < endY; ++py)
 		{
 			float pixelDepth{};
+			float linearDepth{};
 			Vector2 UVCoord{};
 
 			const float screenY{ py + 0.5f };
@@ -161,15 +165,18 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 				const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
 				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
 				const Vertex_Out& vertex{ m_TriangleVertexVec[oppositeIdx] };
+				const float currentLinearDepth{ 1 / vertex.position.w * weight };
 
 				//finalColor += vertex.color * weight;
+				
+				linearDepth += currentLinearDepth;
 				pixelDepth += 1 / vertex.position.z * weight;
-				UVCoord += vertex.uv / vertex.position.z * weight;
+				UVCoord += vertex.uv * currentLinearDepth;
 			}
 
 			// Done for proper depth buffer
 			pixelDepth = 1 / pixelDepth;
-			UVCoord *= pixelDepth;
+			UVCoord *= 1 / linearDepth;
 
 			finalColor = texturePtr->Sample(UVCoord);
 
