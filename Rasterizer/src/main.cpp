@@ -8,9 +8,12 @@
 #include <iostream>
 
 //Project includes
+#include <list>
+
 #include "Timer.h"
 #include "Renderer.h"
 #include "Scene.h"
+#include "SceneManager.h"
 
 using namespace dae;
 
@@ -44,12 +47,12 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
-	Scene* scenePtr{ new Scene_W8_TukTuk() };
+
+	SceneManager sceneManager{};
 
 	//Start loop
 	pTimer->Start();
-	scenePtr->Initialize();
-	pRenderer->SetScene(scenePtr);
+	pRenderer->SetScene(sceneManager.GetScene(), pWindow);
 
 	// Start Benchmark
 	// TODO pTimer->StartBenchmark();
@@ -73,13 +76,17 @@ int main(int argc, char* args[])
 					takeScreenshot = true;
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
-					pRenderer->ToggleRenderType();
+					pRenderer->CycleRenderMode();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					pRenderer->SetScene(sceneManager.Next(), pWindow);
+
 				break;
 			}
 		}
 
 		//--------- Update ---------
-		scenePtr->Update(pTimer);
+		sceneManager.Update(pTimer);
 
 		//--------- Render ---------
 		pRenderer->Render();
@@ -108,7 +115,6 @@ int main(int argc, char* args[])
 	//Shutdown "framework"
 	delete pRenderer;
 	delete pTimer;
-	delete scenePtr;
 
 	ShutDown(pWindow);
 	return 0;

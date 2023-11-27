@@ -173,8 +173,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 				const Vertex_Out& vertex{ m_TriangleVertexVec[oppositeIdx] };
 				const float newWDepth{ 1 / vertex.position.w * weight };
 
-				//finalColor += vertex.color * weight;
-				
+				finalColor += vertex.color * weight;
 				wDepth += newWDepth;
 				zDepth += 1 / vertex.position.z * weight;
 				UVCoord += vertex.uv * newWDepth;
@@ -188,7 +187,16 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			// Depth view mode
 			const float depthColor{ Remap(0.8f, 1.f, zDepth) };
 
-			finalColor = (m_RenderColor) ? texturePtr->Sample(UVCoord) : ColorRGB{ depthColor, depthColor, depthColor };
+			switch(m_RenderMode)
+			{
+			case RenderMode::Texture:
+				assert(texturePtr != nullptr && "No texture found");
+				finalColor = texturePtr->Sample(UVCoord);
+				break;
+			case RenderMode::Depth:
+				finalColor = ColorRGB{ depthColor, depthColor, depthColor };
+				break;
+			}
 
 			if (AddPixelToDepthBuffer(zDepth, px, py))
 				AddPixelToRGBBuffer(finalColor, px, py);
@@ -343,13 +351,17 @@ bool Renderer::SaveBufferToImage() const
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
 }
 
-void Renderer::SetScene(Scene* scenePtr)
+void Renderer::SetScene(Scene* scenePtr, SDL_Window* windowPtr)
 {
 	scenePtr->GetCamera().aspectRatio = m_AspectRatio;
 	m_ScenePtr = scenePtr;
+	SDL_SetWindowTitle(windowPtr, ("Rasterizer (Mikail Kahya 2GD10) - " + scenePtr->GetName()).c_str());
 }
 
-void Renderer::ToggleRenderType()
+void Renderer::CycleRenderMode()
 {
-	m_RenderColor = !m_RenderColor;
+	constexpr int endIdx{ static_cast<int>(RenderMode::end) };
+	int modeIdx{ static_cast<int>(m_RenderMode) };
+	modeIdx = ++modeIdx % endIdx;
+	m_RenderMode = static_cast<RenderMode>(modeIdx);
 }

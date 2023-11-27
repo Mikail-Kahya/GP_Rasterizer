@@ -33,12 +33,19 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void SetScene(Scene* scenePtr);
-		void ToggleRenderType();
+		void SetScene(Scene* scenePtr, SDL_Window* windowPtr);
+		void CycleRenderMode();
 
 	private:
 		// constants to prevent retyping
 		static constexpr int NR_TRI_VERTS{ 3 };
+		enum class RenderMode
+		{
+			Texture,
+			Depth,
+			Color,
+			end
+		};
 
 		// Rendering functions
 		void RenderMesh(const Mesh& mesh);
@@ -66,7 +73,7 @@ namespace dae
 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};
-		bool m_RenderColor{ true };
+		RenderMode m_RenderMode{ RenderMode::Texture };
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };

@@ -28,6 +28,7 @@ namespace dae {
 
 	void Scene_W6::Initialize()
 	{
+        sceneName = "Scene W6: Test scene";
 		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
 		//default: Material id0 >> SolidColor Material (RED)
@@ -46,6 +47,7 @@ namespace dae {
 
 	void Scene_W7_List::Initialize()
 	{
+        sceneName = "Scene W7: List mesh";
 		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
         m_MeshVec = {
@@ -78,6 +80,7 @@ namespace dae {
 
 	void Scene_W7_Strip::Initialize()
 	{
+        sceneName = "Scene W7: Strip mesh";
         m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
         m_MeshVec = {
@@ -114,6 +117,9 @@ namespace dae {
 
 	void Scene_W8_TukTuk::Initialize()
 	{
+        sceneName = "Scene W8: Tuk Tuk";
+        m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+
         AddMesh("tuktuk.obj");
 		AddTexture("tuktuk.png");
 
@@ -123,6 +129,9 @@ namespace dae {
 
 	void Scene_W8_Vehicle::Initialize()
 	{
+        sceneName = "Scene W8: Vehicle";
+        m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+
         AddMesh("vehicle.obj");
         AddTexture("vehicle_diffuse.png");
 

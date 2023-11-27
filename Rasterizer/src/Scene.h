@@ -27,6 +27,7 @@ namespace dae
 			m_Camera.Update(pTimer);
 		}
 
+		const std::string& GetName() const { return sceneName; }
 		Camera& GetCamera() { return m_Camera; }
 		const std::vector<Vertex>& GetVertices() const { return m_VertexVec; }
 		std::vector<Mesh>& GetMeshes() { return m_MeshVec; }
