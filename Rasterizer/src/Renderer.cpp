@@ -60,35 +60,6 @@ void Renderer::Render()
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
-{
-	const Camera& camera{ m_ScenePtr->GetCamera() };
-
-	for (Mesh& mesh : meshVec)
-	{
-		const Matrix worldViewProjectionMatrix{ mesh.worldMatrix * camera.worldToCamera * camera.projectionMatrix };
-
-		for (Vertex& vertex : mesh.vertices)
-			mesh.vertices_out.push_back(VertexTransform(vertex, worldViewProjectionMatrix));
-	}
-}
-
-Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const
-{
-	//Todo > W1 Projection Stage
-	Vector4 pos{ worldViewProjectionMatrix.TransformPoint({vertex_in.position, 1}) };
-
-	// Add perspective
-	pos.x /= pos.w;
-	pos.y /= pos.w;
-	pos.z /= pos.w;
-
-	pos.x = (pos.x + 1) * 0.5f * m_Width;
-	pos.y = (1 - pos.y) * 0.5f * m_Height;
-
-	return { pos, vertex_in.color, vertex_in.uv };
-}
-
 void Renderer::RenderMesh(const Mesh& mesh)
 {
 	int nrTris{};
@@ -118,14 +89,17 @@ void Renderer::RenderMesh(const Mesh& mesh)
 			// Skip degenerate triangles
 			if (IsDegenerate(mesh, triIdx))
 				continue;
-			
+
 			FillTriangle(mesh, triIdx);
 
 			if (triIdx % 2 != 0)
 				std::swap(m_TriangleVertexVec[1], m_TriangleVertexVec[2]);
 			break;
 		}
-		
+
+		for (Vertex_Out& vertex : m_TriangleVertexVec)
+			vertex.position = NDCToScreenSpace(vertex.position);
+
 		RenderTriangle(mesh.texturePtr);
 	}
 }
@@ -187,7 +161,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			// Depth view mode
 			const float depthColor{ Remap(0.8f, 1.f, zDepth) };
 
-			switch(m_RenderMode)
+			switch (m_RenderMode)
 			{
 			case RenderMode::Texture:
 				assert(texturePtr != nullptr && "No texture found");
@@ -202,6 +176,63 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 				AddPixelToRGBBuffer(finalColor, px, py);
 		}
 	}
+}
+
+void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
+{
+	const Camera& camera{ m_ScenePtr->GetCamera() };
+
+	for (Mesh& mesh : meshVec)
+	{
+		const Matrix worldViewProjectionMatrix{ mesh.worldMatrix * camera.worldToCamera * camera.projectionMatrix };
+
+		for (Vertex& vertex : mesh.vertices)
+			mesh.vertices_out.push_back(VertexTransform(vertex, worldViewProjectionMatrix));
+	}
+}
+
+Vertex_Out Renderer::VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const
+{
+	//Todo > W1 Projection Stage
+	Vector4 pos{ worldViewProjectionMatrix.TransformPoint({vertex_in.position, 1}) };
+
+	// Add perspective
+	pos.x /= pos.w;
+	pos.y /= pos.w;
+	pos.z /= pos.w;
+
+	return {
+		pos,
+		vertex_in.color,
+		vertex_in.uv,
+		vertex_in.normal,
+		vertex_in.tangent,
+		vertex_in.viewDirection
+	};
+}
+
+Vector4 Renderer::NDCToScreenSpace(const Vector4& NDC) const
+{
+	Vector4 screenSpace{ NDC };
+
+	screenSpace.x = (NDC.x + 1) * 0.5f * m_Width;
+	screenSpace.y = (1 - NDC.y) * 0.5f * m_Height;
+
+	return screenSpace;
+}
+
+void Renderer::FillTriangle(const Mesh& mesh, int triIdx)
+{
+	std::array indexArr{ GetIndices(mesh, triIdx) };
+	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indexArr[vertexIdx]];
+}
+
+float Renderer::Remap(float min, float max, float value) const
+{
+	const float range{ max - min };
+	const float multiplier{ 1 / range };
+	return (min - value) * multiplier;
 }
 
 void Renderer::UpdateBuffer()
@@ -226,13 +257,6 @@ bool Renderer::AddPixelToDepthBuffer(float depth, int x, int y) const
 		m_pDepthBufferPixels[idx] = depth;
 
 	return isCloser;
-}
-
-float Renderer::Remap(float min, float max, float value) const
-{
-	const float range{ max - min };
-	const float multiplier{ 1 / range };
-	return (min - value) * multiplier;
 }
 
 Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
@@ -279,6 +303,25 @@ int Renderer::GetNrStrips(const std::vector<uint32_t>& indices) const
 	return nrOfDoubles / 2;
 }
 
+std::array<uint32_t, Renderer::NR_TRI_VERTS> Renderer::GetIndices(const Mesh& mesh, int triIdx) const
+{
+	std::array<uint32_t, NR_TRI_VERTS> indexArr{};
+
+	switch (mesh.primitiveTopology)
+	{
+	case PrimitiveTopology::TriangleList:
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+			indexArr[vertexIdx] = mesh.indices[triIdx * NR_TRI_VERTS + vertexIdx];
+		break;
+	case PrimitiveTopology::TriangleStrip:
+		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+			indexArr[vertexIdx] = mesh.indices[triIdx + vertexIdx];
+		break;
+	}
+
+	return indexArr;
+}
+
 bool Renderer::IsDegenerate(const Mesh& mesh, int triIdx)
 {
 	int prevNr{ -1 };
@@ -307,43 +350,17 @@ bool Renderer::InFrustum(const Mesh& mesh, int triIdx)
 	{
 		const Vertex_Out& vertex{ mesh.vertices_out[indexArr[vertexIdx]] };
 
-		if (!InRange(0.f, 1.f, vertex.position.z))
+		if (!InRange(-1.f, 1.f, vertex.position.z))
 			return false;
 
-		if (!InRange(0.f, fWidth, vertex.position.x))
+		if (!InRange(-1.f, 1.f, vertex.position.x))
 			return false;
 
-		if (!InRange(0.f, fHeight, vertex.position.y))
+		if (!InRange(-1.f, 1.f, vertex.position.y))
 			return false;
 	}
 
 	return true;
-}
-
-std::array<uint32_t, Renderer::NR_TRI_VERTS> Renderer::GetIndices(const Mesh& mesh, int triIdx) const
-{
-	std::array<uint32_t, NR_TRI_VERTS> indexArr{};
-
-	switch (mesh.primitiveTopology)
-	{
-	case PrimitiveTopology::TriangleList:
-		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-			indexArr[vertexIdx] = mesh.indices[triIdx * NR_TRI_VERTS + vertexIdx];
-		break;
-	case PrimitiveTopology::TriangleStrip:
-		for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-			indexArr[vertexIdx] = mesh.indices[triIdx + vertexIdx];
-		break;
-	}
-
-	return indexArr;
-}
-
-void Renderer::FillTriangle(const Mesh& mesh, int triIdx)
-{
-	std::array indexArr{ GetIndices(mesh, triIdx) };
-	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indexArr[vertexIdx]];
 }
 
 bool Renderer::SaveBufferToImage() const

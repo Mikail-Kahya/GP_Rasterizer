@@ -54,22 +54,25 @@ namespace dae
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const;
 
+		Vector4 NDCToScreenSpace(const Vector4& NDC) const;
+		void FillTriangle(const Mesh& mesh, int triIdx);
+		float Remap(float min, float max, float value) const;
+
 		// Buffer functions
 		void UpdateBuffer();
 		void AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const;
 		bool AddPixelToDepthBuffer(float depth, int x, int y) const;
-		float Remap(float min, float max, float value) const;
 
 		// Helpers
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
 		Rect GetBoundingBox() const noexcept;
+		int GetNrStrips(const std::vector<uint32_t>& indices) const;
+		std::array<uint32_t, NR_TRI_VERTS> GetIndices(const Mesh& mesh, int triIdx) const;
 
 		bool IsDegenerate(const Mesh& mesh, int triIdx);
 		bool InFrustum(const Mesh& mesh, int triIdx);
 
-		int GetNrStrips(const std::vector<uint32_t>& indices) const;
-		std::array<uint32_t, NR_TRI_VERTS> GetIndices(const Mesh& mesh, int triIdx) const;
-		void FillTriangle(const Mesh& mesh, int triIdx);
+		
 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};
