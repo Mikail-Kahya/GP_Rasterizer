@@ -33,6 +33,26 @@ namespace dae
 			return true;
 		}
 
+		inline Rect GetBoundingBox(const std::vector<Vector4>& vertices) noexcept
+		{
+			if (vertices.empty())
+				return {};
+
+			constexpr int margin{ 2 };
+			Vector2 bottomLeft{ vertices[0] };
+			Vector2 topRight{ vertices[0] };
+
+			for (const Vector4& vertex : vertices)
+			{
+				bottomLeft.x = std::min(bottomLeft.x, vertex.x - margin);
+				bottomLeft.y = std::min(bottomLeft.y, vertex.y - margin);
+				topRight.x = std::max(topRight.x, vertex.x + margin);
+				topRight.y = std::max(topRight.y, vertex.y + margin);
+			}
+
+			return Rect{ bottomLeft, topRight };
+		}
+
 #pragma endregion
 	}
 

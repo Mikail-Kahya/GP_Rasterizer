@@ -25,7 +25,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_Width * m_Height];
 
 	m_AspectRatio = static_cast<float>(m_Width) / m_Height;
-	m_TriangleVertexVec.resize(NR_TRI_VERTS);
+	m_TriangleVertices.resize(NR_TRI_VERTS);
 	m_AreaParallelVec.resize(NR_TRI_VERTS);
 }
 
@@ -76,28 +76,25 @@ void Renderer::RenderMesh(const Mesh& mesh)
 
 	for (int triIdx{}; triIdx < nrTris; ++triIdx)
 	{
-		if (!InFrustum(mesh, triIdx))
+		// Strip degenerate check
+		if (mesh.primitiveTopology == PrimitiveTopology::TriangleStrip &&
+			IsDegenerate(mesh.indices))
 			continue;
 
-		// Fill up the current triangle
-		switch (mesh.primitiveTopology)
-		{
-		case PrimitiveTopology::TriangleList:
-			FillTriangle(mesh, triIdx);
-			break;
-		case PrimitiveTopology::TriangleStrip:
-			// Skip degenerate triangles
-			if (IsDegenerate(mesh, triIdx))
-				continue;
+		// Fills the triangle vertices in m_TriangleVertices
+		const TriangleIndices indices{ GetIndices(mesh, triIdx) };
+		FillTriangle(mesh.vertices_out, indices);
 
-			FillTriangle(mesh, triIdx);
+		// Frustum culling
+		if (!InFrustum(m_TriangleVertices))
+			continue;
 
-			if (triIdx % 2 != 0)
-				std::swap(m_TriangleVertexVec[1], m_TriangleVertexVec[2]);
-			break;
-		}
+		if (mesh.primitiveTopology == PrimitiveTopology::TriangleStrip &&
+			triIdx % 2 != 0)
+			std::swap(m_TriangleVertices[1], m_TriangleVertices[2]);
 
-		for (Vertex_Out& vertex : m_TriangleVertexVec)
+		// NDC to screen space
+		for (Vertex_Out& vertex : m_TriangleVertices)
 			vertex.position = NDCToScreenSpace(vertex.position);
 
 		RenderTriangle(mesh.texturePtr);
@@ -107,11 +104,16 @@ void Renderer::RenderMesh(const Mesh& mesh)
 void Renderer::RenderTriangle(Texture* texturePtr)
 {
 	// Calculate area of triangle
-	const Vector2 edge1{ m_TriangleVertexVec[1].position - m_TriangleVertexVec[0].position };
-	const Vector2 edge2{ m_TriangleVertexVec[2].position - m_TriangleVertexVec[0].position };
+	const Vector2 edge1{ m_TriangleVertices[1].position - m_TriangleVertices[0].position };
+	const Vector2 edge2{ m_TriangleVertices[2].position - m_TriangleVertices[0].position };
 	const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
 
-	const Rect boundingBox{ GetBoundingBox() };
+	const Rect boundingBox{ GeometryUtils::GetBoundingBox({
+		m_TriangleVertices[0].position,
+		m_TriangleVertices[1].position,
+		m_TriangleVertices[2].position
+		})
+	};
 	ColorRGB finalColor{};
 
 	// Clamp bounding box to screen
@@ -134,7 +136,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			const Vector3 pixelPos{ screenX, screenY, 1 };
 
 			// Checks whether or not the pixel is in the triangle and fills areaParallelVec
-			const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TriangleVertexVec, pixelPos, m_AreaParallelVec) };
+			const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TriangleVertices, pixelPos, m_AreaParallelVec) };
 
 			if (!inTriangle)
 				continue;
@@ -144,7 +146,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			{
 				const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
 				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
-				const Vertex_Out& vertex{ m_TriangleVertexVec[oppositeIdx] };
+				const Vertex_Out& vertex{ m_TriangleVertices[oppositeIdx] };
 				const float newWDepth{ 1 / vertex.position.w * weight };
 
 				finalColor += vertex.color * weight;
@@ -221,11 +223,10 @@ Vector4 Renderer::NDCToScreenSpace(const Vector4& NDC) const
 	return screenSpace;
 }
 
-void Renderer::FillTriangle(const Mesh& mesh, int triIdx)
+void Renderer::FillTriangle(const TriangleVertices& vertices, const TriangleIndices& indices)
 {
-	std::array indexArr{ GetIndices(mesh, triIdx) };
 	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
-		m_TriangleVertexVec[vertexIdx] = mesh.vertices_out[indexArr[vertexIdx]];
+		m_TriangleVertices[vertexIdx] = vertices[indices[vertexIdx]];
 }
 
 float Renderer::Remap(float min, float max, float value) const
@@ -267,26 +268,6 @@ Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
 		static_cast<uint8_t>(color.b * 255));
 }
 
-Rect Renderer::GetBoundingBox() const noexcept
-{
-	if (m_TriangleVertexVec.empty())
-		return {};
-
-	constexpr int margin{ 2 };
-	Vector2 bottomLeft{ m_TriangleVertexVec[0].position };
-	Vector2 topRight{ m_TriangleVertexVec[0].position };
-
-	for (const Vertex_Out& vertex : m_TriangleVertexVec)
-	{
-		bottomLeft.x = std::min(bottomLeft.x, vertex.position.x - margin);
-		bottomLeft.y = std::min(bottomLeft.y, vertex.position.y - margin);
-		topRight.x = std::max(topRight.x, vertex.position.x + margin);
-		topRight.y = std::max(topRight.y, vertex.position.y + margin);
-	}
-
-	return Rect{ bottomLeft, topRight };
-}
-
 int Renderer::GetNrStrips(const std::vector<uint32_t>& indices) const
 {
 	int nrOfDoubles{};
@@ -303,9 +284,9 @@ int Renderer::GetNrStrips(const std::vector<uint32_t>& indices) const
 	return nrOfDoubles / 2;
 }
 
-std::array<uint32_t, Renderer::NR_TRI_VERTS> Renderer::GetIndices(const Mesh& mesh, int triIdx) const
+Renderer::TriangleIndices Renderer::GetIndices(const Mesh& mesh, int triIdx) const
 {
-	std::array<uint32_t, NR_TRI_VERTS> indexArr{};
+	TriangleIndices indexArr{};
 
 	switch (mesh.primitiveTopology)
 	{
@@ -322,35 +303,26 @@ std::array<uint32_t, Renderer::NR_TRI_VERTS> Renderer::GetIndices(const Mesh& me
 	return indexArr;
 }
 
-bool Renderer::IsDegenerate(const Mesh& mesh, int triIdx)
+bool Renderer::IsDegenerate(const std::vector<uint32_t>& indexVec)
 {
 	int prevNr{ -1 };
 
-	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	for (uint32_t index : indexVec)
 	{
-		const int offset{ triIdx + vertexIdx };
-
-		if (prevNr == mesh.indices[offset])
+		if (prevNr == index)
 			return true;
 
-		prevNr = mesh.indices[offset];
+		prevNr = index;
 	}
 
 	return false;
 }
 
-bool Renderer::InFrustum(const Mesh& mesh, int triIdx)
+bool Renderer::InFrustum(const TriangleVertices& vertexVec)
 {
-	int prevNr{ -1 };
-	const float fWidth{ static_cast<float>(m_Width) };
-	const float fHeight{ static_cast<float>(m_Height) };
-	std::array indexArr{ GetIndices(mesh, triIdx) };
-
-	for (int vertexIdx{}; vertexIdx < NR_TRI_VERTS; ++vertexIdx)
+	for (const Vertex_Out& vertex : vertexVec)
 	{
-		const Vertex_Out& vertex{ mesh.vertices_out[indexArr[vertexIdx]] };
-
-		if (!InRange(-1.f, 1.f, vertex.position.z))
+		if (!InRange(0.f, 1.f, vertex.position.z))
 			return false;
 
 		if (!InRange(-1.f, 1.f, vertex.position.x))

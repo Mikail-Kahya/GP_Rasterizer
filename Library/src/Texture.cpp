@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <cassert>
+#include <iostream>
 #include <sstream>
 
 #include "Vector2.h"
@@ -33,10 +34,13 @@ namespace dae
 
 		SDL_Surface* surfacePtr{ IMG_Load(buffer.str().c_str()) };
 
-		buffer << " is not found";
-
 		if (surfacePtr == nullptr)
+		{
+			buffer << " is not found";
+			std::cout << buffer.str() << std::endl;
+
 			throw TextureNotFoundException();
+		}
 
 		//Create & Return a new Texture Object (using SDL_Surface)
 

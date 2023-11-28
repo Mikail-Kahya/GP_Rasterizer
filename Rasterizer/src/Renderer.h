@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <vector>
+#include <array>
 
-#include "Camera.h"
 #include "DataTypes.h"
 
 struct SDL_Window;
@@ -39,6 +39,9 @@ namespace dae
 	private:
 		// constants to prevent retyping
 		static constexpr int NR_TRI_VERTS{ 3 };
+		typedef std::array<uint32_t, NR_TRI_VERTS> TriangleIndices;
+		typedef std::vector<Vertex_Out> TriangleVertices;
+
 		enum class RenderMode
 		{
 			Texture,
@@ -55,7 +58,7 @@ namespace dae
 		Vertex_Out VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const;
 
 		Vector4 NDCToScreenSpace(const Vector4& NDC) const;
-		void FillTriangle(const Mesh& mesh, int triIdx);
+		void FillTriangle(const TriangleVertices& vertices, const TriangleIndices& indices);
 		float Remap(float min, float max, float value) const;
 
 		// Buffer functions
@@ -65,15 +68,12 @@ namespace dae
 
 		// Helpers
 		Uint32 GetSDLRGB(const ColorRGB& color) const;
-		Rect GetBoundingBox() const noexcept;
-		int GetNrStrips(const std::vector<uint32_t>& indices) const;
-		std::array<uint32_t, NR_TRI_VERTS> GetIndices(const Mesh& mesh, int triIdx) const;
+		int GetNrStrips(const std::vector<uint32_t>& indexVec) const;
+		TriangleIndices GetIndices(const Mesh& mesh, int triIdx) const;
 
-		bool IsDegenerate(const Mesh& mesh, int triIdx);
-		bool InFrustum(const Mesh& mesh, int triIdx);
-
-		
-
+		bool IsDegenerate(const std::vector<uint32_t>& indexVec);
+		bool InFrustum(const TriangleVertices& vertices);
+		 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};
 		RenderMode m_RenderMode{ RenderMode::Texture };
@@ -91,7 +91,7 @@ namespace dae
 		int m_Height{};
 
 		// Vectors here to prevent allocation on every frame
-		std::vector<Vertex_Out> m_TriangleVertexVec{};
+		TriangleVertices m_TriangleVertices{};
 		std::vector<float> m_AreaParallelVec{};
 	};
 }
