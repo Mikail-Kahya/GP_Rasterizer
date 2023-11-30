@@ -108,7 +108,7 @@ void Renderer::RenderTriangle(Material* materialPtr)
 	// Calculate area of triangle
 	const Vector2 edge1{ m_TriangleVertices[1].position - m_TriangleVertices[0].position };
 	const Vector2 edge2{ m_TriangleVertices[2].position - m_TriangleVertices[0].position };
-	const float areaTri{ Vector2::Cross(edge1, edge2) / 2 };
+	const float triArea{ Vector2::Cross(edge1, edge2) * 0.5f};
 
 	const Rect boundingBox{ GeometryUtils::GetBoundingBox({
 		m_TriangleVertices[0].position,
@@ -130,12 +130,8 @@ void Renderer::RenderTriangle(Material* materialPtr)
 
 		for (int py{ startY }; py < endY; ++py)
 		{
-			float zDepth{};
-			float wDepth{};
-			Vector2 UVCoord{};
-
 			const float screenY{ py + 0.5f };
-			const Vector3 pixelPos{ screenX, screenY, 1 };
+			const Vector3 pixelPos{ screenX, screenY, 0 };
 
 			// Checks whether or not the pixel is in the triangle and fills areaParallelVec
 			const bool inTriangle{ GeometryUtils::PixelInTriangle(m_TriangleVertices, pixelPos, m_AreaParallelVec) };
@@ -143,39 +139,22 @@ void Renderer::RenderTriangle(Material* materialPtr)
 			if (!inTriangle)
 				continue;
 
-			// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
-			for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
-			{
-				const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
-				const float weight{ (m_AreaParallelVec[interpolateIdx] * 0.5f) / areaTri };
-				const Vertex_Out& vertex{ m_TriangleVertices[oppositeIdx] };
-				const float newWDepth{ 1 / vertex.position.w * weight };
-
-				finalColor += vertex.color * weight;
-				wDepth += newWDepth;
-				zDepth += 1 / vertex.position.z * weight;
-				UVCoord += vertex.uv * newWDepth;
-			}
-
-			// Done for proper depth buffer
-			zDepth = 1 / zDepth;
-			wDepth = 1 / wDepth;
-			UVCoord *= wDepth;
+			const Vertex_Out interpolatedVertex{ InterpolateVertices(m_TriangleVertices, m_AreaParallelVec, triArea) };
 
 			// Depth view mode
-			const float depthColor{ Remap(0.8f, 1.f, zDepth) };
+			const float depthColor{ Remap(0.8f, 1.f, interpolatedVertex.position.z) };
 
 			switch (m_RenderMode)
 			{
 			case RenderMode::Texture:
-				finalColor = ShadePixel(Vertex_Out{ {}, finalColor, UVCoord, m_TriangleVertices[0].normal}, materialPtr);
+				finalColor = ShadePixel(interpolatedVertex, materialPtr);
 				break;
 			case RenderMode::Depth:
 				finalColor = ColorRGB{ depthColor, depthColor, depthColor };
 				break;
 			}
 
-			if (AddPixelToDepthBuffer(zDepth, px, py))
+			if (AddPixelToDepthBuffer(interpolatedVertex.position.z, px, py))
 				AddPixelToRGBBuffer(finalColor, px, py);
 		}
 	}
@@ -277,6 +256,14 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	zDepth = 1 / zDepth;
 	wDepth = 1 / wDepth;
 	UVCoord *= wDepth;
+	normal *= wDepth;
+
+	return{
+		{ 0, 0, zDepth, wDepth },
+		finalColor,
+		UVCoord,
+		normal
+	};
 }
 
 void Renderer::UpdateBuffer()
