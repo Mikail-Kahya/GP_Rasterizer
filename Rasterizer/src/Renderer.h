@@ -11,6 +11,7 @@ struct SDL_Surface;
 
 namespace dae
 {
+	class Material;
 	struct Vector3;
 	class Texture;
 	struct Mesh;
@@ -33,7 +34,7 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void SetScene(Scene* scenePtr, SDL_Window* windowPtr);
+		void SetScene(Scene* scenePtr);
 		void CycleRenderMode();
 
 	private:
@@ -52,7 +53,7 @@ namespace dae
 
 		// Rendering functions
 		void RenderMesh(const Mesh& mesh);
-		void RenderTriangle(Texture* texturePtr);
+		void RenderTriangle(Material* materialPtr);
 
 		void VerticesTransform(std::vector<Mesh>& meshVec) const;
 		Vertex_Out VertexTransform(const Vertex& vertex_in, const Matrix& worldViewProjectionMatrix) const;
@@ -60,6 +61,8 @@ namespace dae
 		Vector4 NDCToScreenSpace(const Vector4& NDC) const;
 		void FillTriangle(const TriangleVertices& vertices, const TriangleIndices& indices);
 		float Remap(float min, float max, float value) const;
+		ColorRGB ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const;
+		Vertex_Out InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const;
 
 		// Buffer functions
 		void UpdateBuffer();
@@ -82,7 +85,7 @@ namespace dae
 		SDL_Surface* m_pBackBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{};
 		
-		ColorRGB m_ClearColor{0.2f, 0.2f, 0.2f};
+		ColorRGB m_ClearColor{0.3f, 0.3f, 0.3f};
 		float* m_pDepthBufferPixels{};
 
 		float m_AspectRatio{};

@@ -1,32 +1,56 @@
 #include "Scene.h"
 
+#include "Material.h"
 #include "Texture.h"
 #include "Utils.h"
 
 namespace dae {
 
 #pragma region SCENE W6
-	Scene::~Scene()
+	Scene::Scene()
 	{
-        for (Texture* texturePtr : m_TexturePtrVec)
-            delete texturePtr;
+        // Add default material on index 0 for every scene
+        if (m_TexturePtrVec.empty())
+            m_MaterialPtrVec.push_back(new Material_SolidColor{ AddTexture("uv_grid_2.png") });
 	}
 
-	void Scene::AddTexture(const std::string& path)
+	Material* Scene::GetMaterial(size_t materialIdx)
 	{
-        m_TexturePtrVec.push_back(Texture::LoadFromFile(path));
+        try
+        {
+            return m_MaterialPtrVec[materialIdx];
+        }
+        catch(...) // vector out of range exception
+        {
+            // 0 will always be the default texture
+            return m_MaterialPtrVec[0];
+        }
 	}
 
-	void Scene::AddMesh(const std::string& path)
+    Texture* Scene::AddTexture(const std::string& path)
+	{
+        Texture* texturePtr{ Texture::LoadFromFile(path) };
+        m_TexturePtrVec.push_back(texturePtr);
+        return texturePtr;
+	}
+
+    Mesh& Scene::AddMesh(const std::string& path)
 	{
         Mesh mesh{};
 
         Utils::ParseOBJ("Resources/" + path, mesh.vertices, mesh.indices);
 
         m_MeshVec.push_back(mesh);
+        return m_MeshVec.back();
 	}
 
-	void Scene_W6::Initialize()
+    size_t Scene::AddMaterial(Material* materialPtr)
+    {
+        m_MaterialPtrVec.push_back(materialPtr);
+        return m_MaterialPtrVec.size() - 1;
+    }
+
+    void Scene_W6::Initialize()
 	{
         sceneName = "Scene W6: Test scene";
 		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
@@ -73,9 +97,7 @@ namespace dae {
             }
         };
 
-        AddTexture("uv_grid_2.png");
-
-        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+        m_MeshVec[0].materialIdx = 0;
 	}
 
 	void Scene_W7_Strip::Initialize()
@@ -109,9 +131,7 @@ namespace dae {
         };
 
 
-        AddTexture("uv_grid_2.png");
-
-        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+        m_MeshVec[0].materialIdx = 0;
         
 	}
 
@@ -120,11 +140,10 @@ namespace dae {
         sceneName = "Scene W8: Tuk Tuk";
         m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
-        AddMesh("tuktuk.obj");
-		AddTexture("tuktuk.png");
+        Mesh& mesh{ AddMesh("tuktuk.obj") };
 
-        m_MeshVec[0].primitiveTopology = PrimitiveTopology::TriangleList;
-        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+        mesh.primitiveTopology = PrimitiveTopology::TriangleList;
+        mesh.materialIdx = AddMaterial(new Material_SolidColor{ AddTexture("tuktuk.png") });
 	}
 
 	void Scene_W8_Vehicle::Initialize()
@@ -132,11 +151,10 @@ namespace dae {
         sceneName = "Scene W8: Vehicle";
         m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
 
-        AddMesh("vehicle.obj");
-        AddTexture("vehicle_diffuse.png");
+        Mesh& mesh{ AddMesh("vehicle.obj") };
 
-        m_MeshVec[0].primitiveTopology = PrimitiveTopology::TriangleList;
-        m_MeshVec[0].texturePtr = m_TexturePtrVec[0];
+        mesh.primitiveTopology = PrimitiveTopology::TriangleList;
+        mesh.materialIdx = AddMaterial(new Material_SolidColor{ AddTexture("vehicle_diffuse.png") });
 	}
 #pragma endregion
 }

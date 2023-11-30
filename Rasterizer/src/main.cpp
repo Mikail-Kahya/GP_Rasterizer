@@ -23,6 +23,11 @@ void ShutDown(SDL_Window* pWindow)
 	SDL_Quit();
 }
 
+void SetTitle(SDL_Window* windowPtr, const std::string& title)
+{
+	SDL_SetWindowTitle(windowPtr, ("Rasterizer (Mikail Kahya 2GD10) - " + title).c_str());
+}
+
 int main(int argc, char* args[])
 {
 	//Unreferenced parameters
@@ -52,7 +57,8 @@ int main(int argc, char* args[])
 
 	//Start loop
 	pTimer->Start();
-	pRenderer->SetScene(sceneManager.GetScene(), pWindow);
+	pRenderer->SetScene(sceneManager.GetScene());
+	SetTitle(pWindow, sceneManager.GetScene()->GetName());
 
 	// Start Benchmark
 	// TODO pTimer->StartBenchmark();
@@ -79,7 +85,13 @@ int main(int argc, char* args[])
 					pRenderer->CycleRenderMode();
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
-					pRenderer->SetScene(sceneManager.Next(), pWindow);
+				{
+					Scene* scenePtr{ sceneManager.Next() };
+					pRenderer->SetScene(scenePtr);
+					SetTitle(pWindow, scenePtr->GetName());
+				}
+					
+					
 
 				break;
 			}

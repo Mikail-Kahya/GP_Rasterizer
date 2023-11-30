@@ -27,6 +27,7 @@ namespace dae
 
 				if (areaParallel < 0)
 					return false;
+
 				areaParallelVec[idx] = areaParallel;
 			}
 

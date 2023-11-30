@@ -5,6 +5,7 @@
 //Project includes
 #include "Renderer.h"
 
+#include "Material.h"
 #include "Scene.h"
 #include "Texture.h"
 #include "Utils.h"
@@ -63,6 +64,7 @@ void Renderer::Render()
 void Renderer::RenderMesh(const Mesh& mesh)
 {
 	int nrTris{};
+	Material* materialPtr{ m_ScenePtr->GetMaterial(mesh.materialIdx) };
 
 	switch (mesh.primitiveTopology)
 	{
@@ -97,11 +99,11 @@ void Renderer::RenderMesh(const Mesh& mesh)
 		for (Vertex_Out& vertex : m_TriangleVertices)
 			vertex.position = NDCToScreenSpace(vertex.position);
 
-		RenderTriangle(mesh.texturePtr);
+		RenderTriangle(materialPtr);
 	}
 }
 
-void Renderer::RenderTriangle(Texture* texturePtr)
+void Renderer::RenderTriangle(Material* materialPtr)
 {
 	// Calculate area of triangle
 	const Vector2 edge1{ m_TriangleVertices[1].position - m_TriangleVertices[0].position };
@@ -166,8 +168,7 @@ void Renderer::RenderTriangle(Texture* texturePtr)
 			switch (m_RenderMode)
 			{
 			case RenderMode::Texture:
-				assert(texturePtr != nullptr && "No texture found");
-				finalColor = texturePtr->Sample(UVCoord);
+				finalColor = ShadePixel(Vertex_Out{ {}, finalColor, UVCoord, m_TriangleVertices[0].normal}, materialPtr);
 				break;
 			case RenderMode::Depth:
 				finalColor = ColorRGB{ depthColor, depthColor, depthColor };
@@ -189,7 +190,12 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 		const Matrix worldViewProjectionMatrix{ mesh.worldMatrix * camera.worldToCamera * camera.projectionMatrix };
 
 		for (Vertex& vertex : mesh.vertices)
-			mesh.vertices_out.push_back(VertexTransform(vertex, worldViewProjectionMatrix));
+		{
+			Vertex_Out vertex_out{ VertexTransform(vertex, worldViewProjectionMatrix) };
+			vertex_out.normal = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
+
+			mesh.vertices_out.push_back(std::move(vertex_out));
+		}
 	}
 }
 
@@ -234,6 +240,43 @@ float Renderer::Remap(float min, float max, float value) const
 	const float range{ max - min };
 	const float multiplier{ 1 / range };
 	return (min - value) * multiplier;
+}
+
+ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const
+{
+	const Vector3 lightDirection{ 0.577f, -0.577f, 0.577f };
+	const float observedArea{ BRDF::ObservedArea(lightDirection, vertex.normal) };
+	
+	return materialPtr->PixelShade(vertex) * observedArea;
+}
+
+Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const
+{
+	float zDepth{};
+	float wDepth{};
+	Vector2 UVCoord{};
+	Vector3 normal{};
+	ColorRGB finalColor{};
+
+	// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
+	for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
+	{
+		const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
+		const float weight{ (vertexAreaVec[interpolateIdx] * 0.5f) / triArea };
+		const Vertex_Out& vertex{ vertices[oppositeIdx] };
+		const float newWDepth{ 1 / vertex.position.w * weight };
+
+		finalColor += vertex.color * weight;
+		wDepth += newWDepth;
+		zDepth += 1 / vertex.position.z * weight;
+		UVCoord += vertex.uv * newWDepth;
+		normal += vertex.normal * newWDepth;
+	}
+
+	// Done for proper depth buffer
+	zDepth = 1 / zDepth;
+	wDepth = 1 / wDepth;
+	UVCoord *= wDepth;
 }
 
 void Renderer::UpdateBuffer()
@@ -340,11 +383,10 @@ bool Renderer::SaveBufferToImage() const
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
 }
 
-void Renderer::SetScene(Scene* scenePtr, SDL_Window* windowPtr)
+void Renderer::SetScene(Scene* scenePtr)
 {
 	scenePtr->GetCamera().aspectRatio = m_AspectRatio;
 	m_ScenePtr = scenePtr;
-	SDL_SetWindowTitle(windowPtr, ("Rasterizer (Mikail Kahya 2GD10) - " + scenePtr->GetName()).c_str());
 }
 
 void Renderer::CycleRenderMode()

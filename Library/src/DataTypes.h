@@ -4,7 +4,7 @@
 
 namespace dae
 {
-	class Texture;
+	class Material;
 
 	struct Vertex
 	{
@@ -82,7 +82,7 @@ namespace dae
 
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
-		Texture* texturePtr{};
+		size_t materialIdx{};
 	};
 	
 }

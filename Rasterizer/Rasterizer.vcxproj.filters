@@ -1,19 +1,45 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="src\Renderer.h" />
-    <ClInclude Include="src\Scene.h" />
-    <ClInclude Include="src\SceneManager.h" />
+    <ClInclude Include="src\Renderer.h">
+      <Filter>Render Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BRDFs.h">
+      <Filter>Render Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneManager.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scene.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Material.h">
+      <Filter>Render Classes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Renderer.cpp" />
-    <ClCompile Include="src\Scene.cpp" />
-    <ClCompile Include="src\SceneManager.cpp" />
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Render Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneManager.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scene.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Misc">
       <UniqueIdentifier>{f7261186-da77-45fd-b82b-18b1f4e4aa21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render Classes">
+      <UniqueIdentifier>{4f574645-3a2f-435b-a893-7b271f03e65e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{9b59cef2-6670-46fe-861f-299440dd0323}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

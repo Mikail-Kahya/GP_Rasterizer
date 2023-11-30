@@ -4,8 +4,8 @@
 
 SceneManager::SceneManager()
 {
-	m_ScenePtrList.push_back(new dae::Scene_W8_TukTuk());
 	m_ScenePtrList.push_back(new dae::Scene_W8_Vehicle());
+	m_ScenePtrList.push_back(new dae::Scene_W8_TukTuk());
 	m_ScenePtrList.push_back(new dae::Scene_W7_List());
 	m_ScenePtrList.push_back(new dae::Scene_W7_Strip());
 
@@ -37,6 +37,5 @@ dae::Scene* SceneManager::GetScene() const
 
 void SceneManager::Update(dae::Timer* timerPtr)
 {
-	dae::Scene* scenePtr{ *m_It };
-	scenePtr->Update(timerPtr);
+	(*m_It)->Update(timerPtr);
 }

@@ -13,8 +13,8 @@ namespace dae
 	class Scene
 	{
 	public:
-		Scene() = default;
-		virtual ~Scene();
+		Scene();
+		virtual ~Scene() = default; // No cleanup needed for statics
 
 		Scene(const Scene&) = delete;
 		Scene(Scene&&) noexcept = delete;
@@ -31,11 +31,12 @@ namespace dae
 		Camera& GetCamera() { return m_Camera; }
 		const std::vector<Vertex>& GetVertices() const { return m_VertexVec; }
 		std::vector<Mesh>& GetMeshes() { return m_MeshVec; }
-		const std::vector<Texture*>& GetTextures() const { return m_TexturePtrVec; }
+		static Material* GetMaterial(size_t materialIdx);
 
 	protected:
-		void AddTexture(const std::string& path);
-		void AddMesh(const std::string& path);
+		Texture* AddTexture(const std::string& path);
+		Mesh& AddMesh(const std::string& path);
+		size_t AddMaterial(Material* materialPtr);
 
 		std::string	sceneName;
 		Camera m_Camera{};
@@ -43,7 +44,8 @@ namespace dae
 		std::vector<Vertex> m_VertexVec{};
 		std::vector<Mesh> m_MeshVec{};
 
-		std::vector<Texture*> m_TexturePtrVec{};
+		inline static std::vector<Texture*> m_TexturePtrVec{};
+		inline static std::vector<Material*> m_MaterialPtrVec{};
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++
