@@ -24,7 +24,7 @@ namespace dae
 				Vector3::Zero
 			};
 
-			const ColorRGB sampledNormal{ m_NormalPtr->Sample(vertex.uv) / 255.f };
+			const ColorRGB sampledNormal{ m_NormalPtr->Sample(vertex.uv) };
 			return  tangentSpaceAxis.TransformPoint({
 				2.f * sampledNormal.r - 1.f,
 				2.f * sampledNormal.g - 1.f,

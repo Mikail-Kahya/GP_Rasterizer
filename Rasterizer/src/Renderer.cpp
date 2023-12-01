@@ -175,7 +175,7 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 		{
 			Vertex_Out vertex_out{ VertexTransform(vertex, worldViewProjectionMatrix) };
 			vertex_out.normal = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
-			vertex_out.tangent = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
+			vertex_out.tangent = mesh.worldMatrix.TransformPoint(vertex.tangent).Normalized();
 
 			mesh.vertices_out.push_back(std::move(vertex_out));
 		}
@@ -229,7 +229,6 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	Vector3 normal{};
 	Vector3 tangent{};
 
-
 	// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
 	for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 	{
@@ -280,7 +279,7 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 
 	const float observedArea{ BRDF::ObservedArea(lightDirection, normal) };
 
-	return colors::White * observedArea;
+	return albedo * observedArea;
 }
 
 void Renderer::UpdateBuffer()
