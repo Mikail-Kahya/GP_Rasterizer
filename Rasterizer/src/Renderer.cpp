@@ -271,7 +271,8 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 		finalColor,
 		UVCoord,
 		normal,
-		tangent
+		tangent,
+		viewDirection
 	};
 }
 
