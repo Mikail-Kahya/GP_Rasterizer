@@ -54,6 +54,13 @@ namespace dae
 			return Rect{ bottomLeft, topRight };
 		}
 
+		inline float Remap(float min, float max, float value)
+		{
+			const float range{ max - min };
+			const float multiplier{ 1 / range };
+			return (min - value) * multiplier;
+		}
+
 #pragma endregion
 	}
 

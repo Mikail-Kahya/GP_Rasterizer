@@ -172,6 +172,7 @@ xcopy "$(ProjectDir)Resources\" "$(OutDir)\Resources\" /y /D</Command>
     <ClInclude Include="src\Scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />

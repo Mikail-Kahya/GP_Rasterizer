@@ -25,11 +25,10 @@ namespace dae
 			return cd * kd / PI;
 		}
 
-
 		static float ObservedArea(const Vector3& lightDirection, const Vector3& normal)
 		{
 			// Use inverted light (hit to light)
-			return Vector3::Dot(-lightDirection, normal);
+			return std::max(0.f, Vector3::Dot(-lightDirection, normal));
 		}
 	}
 }

@@ -17,7 +17,7 @@ namespace dae
 	class Material
 	{
 	public:
-		Material(Texture* texturePtr) : m_TexturePtr{ texturePtr } {}
+		Material(Texture* albedoPtr, Texture* normalPtr);
 		virtual ~Material() = default;
 
 		Material(const Material&) = delete;
@@ -25,40 +25,33 @@ namespace dae
 		Material& operator=(const Material&) = delete;
 		Material& operator=(Material&&) noexcept = delete;
 
-		virtual ColorRGB PixelShade(const Vertex_Out& vertex) = 0;
+		virtual ColorRGB GetAlbedo(const Vertex_Out& vertex) const = 0;
+		virtual Vector3 GetNormal(const Vertex_Out& vertex) const;
+
 
 	protected:
-		Texture* m_TexturePtr{ nullptr };
+		Texture* m_AlbedoPtr{ nullptr };
+		Texture* m_NormalPtr{ nullptr };
 	};
 #pragma endregion
 
-#pragma region Material SOLID COLOR
-	//SOLID COLOR
-	//===========
+#pragma region Material SOLID
 	class Material_SolidColor final : public Material
 	{
 	public:
-		Material_SolidColor(Texture* texturePtr = nullptr) : Material(texturePtr) {}
+		Material_SolidColor(Texture* albedoPtr, Texture* normalPtr);
+		virtual ~Material_SolidColor() override = default;
 
-		ColorRGB PixelShade(const Vertex_Out& vertex) override
-		{
-			ColorRGB finalColor{};
-			try
-			{
-				finalColor = m_TexturePtr->Sample(vertex.uv);
-			}
-			catch(...)
-			{
-				finalColor = vertex.color;
-			}
-			return finalColor;
-			
-		}
+		Material_SolidColor(const Material_SolidColor&) = delete;
+		Material_SolidColor(Material_SolidColor&&) noexcept = delete;
+		Material_SolidColor& operator=(const Material_SolidColor&) = delete;
+		Material_SolidColor& operator=(Material_SolidColor&&) noexcept = delete;
 
-	private:
-		ColorRGB m_Color{colors::White};
+		ColorRGB GetAlbedo(const Vertex_Out& vertex) const override;
+
 	};
 #pragma endregion
+
 
 #pragma region Material LAMBERT
 	//LAMBERT
@@ -66,25 +59,15 @@ namespace dae
 	class Material_Lambert final : public Material
 	{
 	public:
-		Material_Lambert(float diffuseReflectance) : Material_Lambert(nullptr, diffuseReflectance){}
-		Material_Lambert(Texture* texturePtr, float diffuseReflectance) :
-			Material(texturePtr), m_DiffuseReflectance(diffuseReflectance){}
+		Material_Lambert(Texture* albedoPtr, Texture* normalPtr, float diffuseReflectance);
+		virtual ~Material_Lambert() override = default;
 
-		ColorRGB PixelShade(const Vertex_Out& vertex) override
-		{
-			ColorRGB finalColor{};
+		Material_Lambert(const Material_Lambert&) = delete;
+		Material_Lambert(Material_Lambert&&) noexcept = delete;
+		Material_Lambert& operator=(const Material_Lambert&) = delete;
+		Material_Lambert& operator=(Material_Lambert&&) noexcept = delete;
 
-			try
-			{
-				finalColor = m_TexturePtr->Sample(vertex.uv);
-			}
-			catch (...)
-			{
-				finalColor = vertex.color;
-			}
-
-			return BRDF::Lambert(m_DiffuseReflectance, finalColor);
-		}
+		ColorRGB GetAlbedo(const Vertex_Out& vertex) const override;
 
 	private:
 		float m_DiffuseReflectance{1.f}; //kd

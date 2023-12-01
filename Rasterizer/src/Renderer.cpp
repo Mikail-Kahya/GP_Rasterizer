@@ -144,7 +144,7 @@ void Renderer::RenderTriangle(Material* materialPtr)
 			if (AddPixelToDepthBuffer(interpolatedVertex.position.z, px, py))
 			{
 				// Depth view mode
-				const float depthColor{ Remap(0.8f, 1.f, interpolatedVertex.position.z) };
+				const float depthColor{ GeometryUtils::Remap(0.8f, 1.f, interpolatedVertex.position.z) };
 
 				switch (m_RenderMode)
 				{
@@ -175,6 +175,7 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 		{
 			Vertex_Out vertex_out{ VertexTransform(vertex, worldViewProjectionMatrix) };
 			vertex_out.normal = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
+			vertex_out.tangent = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
 
 			mesh.vertices_out.push_back(std::move(vertex_out));
 		}
@@ -217,29 +218,17 @@ void Renderer::FillTriangle(const TriangleVertices& vertices, const TriangleIndi
 		m_TriangleVertices[vertexIdx] = vertices[indices[vertexIdx]];
 }
 
-float Renderer::Remap(float min, float max, float value) const
-{
-	const float range{ max - min };
-	const float multiplier{ 1 / range };
-	return (min - value) * multiplier;
-}
-
-ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const
-{
-	const Vector3 lightDirection{ 0.577f, -0.577f, 0.577f };
-	const float observedArea{ BRDF::ObservedArea(lightDirection, vertex.normal) };
-
-	//return colors::White * observedArea;
-	return materialPtr->PixelShade(vertex);
-}
-
 Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const
 {
 	float zDepth{};
 	float wDepth{};
+
+	// pixel data
+	ColorRGB finalColor{};
 	Vector2 UVCoord{};
 	Vector3 normal{};
-	ColorRGB finalColor{};
+	Vector3 tangent{};
+
 
 	// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
 	for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
@@ -247,28 +236,51 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 		const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
 		const float weight{ (vertexAreaVec[interpolateIdx] * 0.5f) / triArea };
 		const Vertex_Out& vertex{ vertices[oppositeIdx] };
-		const float newWDepth{ 1 / vertex.position.w * weight };
-		const float newZDepth{ 1 / vertex.position.z * weight };
 
-		finalColor += vertex.color * weight;
-		wDepth += newWDepth;
-		zDepth += newZDepth;
-		UVCoord += vertex.uv * newWDepth;
-		normal += vertex.normal * newZDepth;
+		const float weightedW{ 1 / vertex.position.w * weight };
+		const float weightedZ{ 1 / vertex.position.z * weight };
+
+		wDepth += weightedW;
+		zDepth += weightedZ;
+
+		// non-Linear interpolation
+		finalColor += vertex.color * weightedW;
+		UVCoord += vertex.uv * weightedW;
+		// World space interpolation
+		normal += vertex.normal * weight;
+		tangent += vertex.tangent * weight;
 	}
 
 	// Done for proper depth buffer
 	zDepth = 1 / zDepth;
 	wDepth = 1 / wDepth;
+
+	finalColor *= wDepth;
 	UVCoord *= wDepth;
-	normal *= zDepth;
+
+	// Normalize => Crossed later
+	normal.Normalize();
+	tangent.Normalize();
 
 	return{
 		{ 0, 0, zDepth, wDepth },
 		finalColor,
 		UVCoord,
-		normal
+		normal,
+		tangent
 	};
+}
+
+ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const
+{
+	const Vector3 lightDirection{ 0.577f, -0.577f, 0.577f };
+
+	const ColorRGB albedo{ materialPtr->GetAlbedo(vertex) };
+	const Vector3 normal{ materialPtr->GetNormal(vertex) };
+
+	const float observedArea{ BRDF::ObservedArea(lightDirection, normal) };
+
+	return colors::White * observedArea;
 }
 
 void Renderer::UpdateBuffer()

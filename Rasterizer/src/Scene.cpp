@@ -11,7 +11,7 @@ namespace dae {
 	{
         // Add default material on index 0 for every scene
         if (m_TexturePtrVec.empty())
-            m_MaterialPtrVec.push_back(new Material_SolidColor{ AddTexture("uv_grid_2.png") });
+            m_MaterialPtrVec.push_back(new Material_SolidColor{ AddTexture("uv_grid_2.png"), nullptr });
 	}
 
 	Material* Scene::GetMaterial(size_t materialIdx)
@@ -143,7 +143,7 @@ namespace dae {
         Mesh& mesh{ AddMesh("tuktuk.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
-        mesh.materialIdx = AddMaterial(new Material_SolidColor{ AddTexture("tuktuk.png") });
+        mesh.materialIdx = AddMaterial(new Material_SolidColor{ AddTexture("tuktuk.png"), nullptr });
 	}
 
 	void Scene_W8_Vehicle::Initialize()
@@ -154,7 +154,7 @@ namespace dae {
         Mesh& mesh{ AddMesh("vehicle.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
-        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("vehicle_diffuse.png"), 7.f });
+        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("vehicle_diffuse.png"), AddTexture("vehicle_normal.png"), 7.f});
 	}
 #pragma endregion
 }

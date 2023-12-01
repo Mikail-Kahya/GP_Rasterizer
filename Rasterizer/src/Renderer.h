@@ -60,9 +60,8 @@ namespace dae
 
 		Vector4 NDCToScreenSpace(const Vector4& NDC) const;
 		void FillTriangle(const TriangleVertices& vertices, const TriangleIndices& indices);
-		float Remap(float min, float max, float value) const;
-		ColorRGB ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const;
 		Vertex_Out InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const;
+		ColorRGB ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const;
 
 		// Buffer functions
 		void UpdateBuffer();
