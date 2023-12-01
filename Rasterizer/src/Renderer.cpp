@@ -176,6 +176,7 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 			Vertex_Out vertex_out{ VertexTransform(vertex, worldViewProjectionMatrix) };
 			vertex_out.normal = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
 			vertex_out.tangent = mesh.worldMatrix.TransformPoint(vertex.tangent).Normalized();
+			vertex_out.viewDirection = vertex.position - camera.origin;
 
 			mesh.vertices_out.push_back(std::move(vertex_out));
 		}
@@ -206,8 +207,8 @@ Vector4 Renderer::NDCToScreenSpace(const Vector4& NDC) const
 {
 	Vector4 screenSpace{ NDC };
 
-	screenSpace.x = (NDC.x + 1) * 0.5f * m_Width;
-	screenSpace.y = (1 - NDC.y) * 0.5f * m_Height;
+	screenSpace.x = (NDC.x + 1) * 0.5f * static_cast<float>(m_Width);
+	screenSpace.y = (1 - NDC.y) * 0.5f * static_cast<float>(m_Height);
 
 	return screenSpace;
 }
@@ -228,6 +229,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	Vector2 UVCoord{};
 	Vector3 normal{};
 	Vector3 tangent{};
+	Vector3 viewDirection{};
 
 	// Figure out the depth and color of a pixel on an object (barycentric coordinates reversed)
 	for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
@@ -248,6 +250,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 		// World space interpolation
 		normal += vertex.normal * weight;
 		tangent += vertex.tangent * weight;
+		viewDirection += vertex.viewDirection * weight;
 	}
 
 	// Done for proper depth buffer
@@ -258,8 +261,10 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	UVCoord *= wDepth;
 
 	// Normalize => Crossed later
+	// Move to post-depth-test if performance would be necessary
 	normal.Normalize();
 	tangent.Normalize();
+	viewDirection.Normalize();
 
 	return{
 		{ 0, 0, zDepth, wDepth },
