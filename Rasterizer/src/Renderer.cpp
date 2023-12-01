@@ -225,7 +225,8 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 {
 	const Vector3 lightDirection{ 0.577f, -0.577f, 0.577f };
 	const float observedArea{ BRDF::ObservedArea(lightDirection, vertex.normal) };
-	
+
+	//return colors::White * observedArea;
 	return materialPtr->PixelShade(vertex) * observedArea;
 }
 
@@ -244,19 +245,20 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 		const float weight{ (vertexAreaVec[interpolateIdx] * 0.5f) / triArea };
 		const Vertex_Out& vertex{ vertices[oppositeIdx] };
 		const float newWDepth{ 1 / vertex.position.w * weight };
+		const float newZDepth{ 1 / vertex.position.z * weight };
 
 		finalColor += vertex.color * weight;
 		wDepth += newWDepth;
-		zDepth += 1 / vertex.position.z * weight;
+		zDepth += newZDepth;
 		UVCoord += vertex.uv * newWDepth;
-		normal += vertex.normal * newWDepth;
+		normal += vertex.normal * newZDepth;
 	}
 
 	// Done for proper depth buffer
 	zDepth = 1 / zDepth;
 	wDepth = 1 / wDepth;
 	UVCoord *= wDepth;
-	normal *= wDepth;
+	normal *= zDepth;
 
 	return{
 		{ 0, 0, zDepth, wDepth },
