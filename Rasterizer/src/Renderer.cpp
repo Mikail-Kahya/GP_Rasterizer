@@ -141,21 +141,24 @@ void Renderer::RenderTriangle(Material* materialPtr)
 
 			const Vertex_Out interpolatedVertex{ InterpolateVertices(m_TriangleVertices, m_AreaParallelVec, triArea) };
 
-			// Depth view mode
-			const float depthColor{ Remap(0.8f, 1.f, interpolatedVertex.position.z) };
-
-			switch (m_RenderMode)
-			{
-			case RenderMode::Texture:
-				finalColor = ShadePixel(interpolatedVertex, materialPtr);
-				break;
-			case RenderMode::Depth:
-				finalColor = ColorRGB{ depthColor, depthColor, depthColor };
-				break;
-			}
-
 			if (AddPixelToDepthBuffer(interpolatedVertex.position.z, px, py))
+			{
+				// Depth view mode
+				const float depthColor{ Remap(0.8f, 1.f, interpolatedVertex.position.z) };
+
+				switch (m_RenderMode)
+				{
+				case RenderMode::Texture:
+					finalColor = ShadePixel(interpolatedVertex, materialPtr);
+					break;
+				case RenderMode::Depth:
+					finalColor = ColorRGB{ depthColor, depthColor, depthColor };
+					break;
+				}
+
 				AddPixelToRGBBuffer(finalColor, px, py);
+			}
+				
 		}
 	}
 }
