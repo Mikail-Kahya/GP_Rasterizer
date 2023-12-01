@@ -227,7 +227,7 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 	const float observedArea{ BRDF::ObservedArea(lightDirection, vertex.normal) };
 
 	//return colors::White * observedArea;
-	return materialPtr->PixelShade(vertex) * observedArea;
+	return materialPtr->PixelShade(vertex);
 }
 
 Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const

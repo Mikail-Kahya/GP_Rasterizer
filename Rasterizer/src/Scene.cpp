@@ -154,7 +154,7 @@ namespace dae {
         Mesh& mesh{ AddMesh("vehicle.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
-        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("vehicle_diffuse.png"), 0.7f });
+        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("vehicle_diffuse.png"), 7.f });
 	}
 #pragma endregion
 }
