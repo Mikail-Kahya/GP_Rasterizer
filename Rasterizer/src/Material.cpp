@@ -3,9 +3,11 @@
 
 namespace dae
 {
-	Material::Material(Texture* albedoPtr, Texture* normalPtr)
+	Material::Material(Texture* albedoPtr, Texture* normalPtr, Texture* specularPtr, Texture* glossPtr)
 		: m_AlbedoPtr{ albedoPtr }
 		, m_NormalPtr{ normalPtr }
+		, m_SpecularPtr{ specularPtr }
+		, m_GlossPtr{ glossPtr }
 	{
 	}
 
@@ -37,8 +39,41 @@ namespace dae
 		}
 	}
 
+	ColorRGB Material::GetSpecular(const Vertex_Out& vertex, const Vector3& lightDirection, const ColorRGB& ambientColor) const
+	{
+		float specular{ 1.f }; 
+		float phongExponent{ 25.f }; // shininess
+
+		if (m_SpecularPtr != nullptr)
+		{
+			try
+			{
+				specular *= m_SpecularPtr->Sample(vertex.uv).r;
+			}
+			catch (...)
+			{
+				// color is already set to white
+			}
+		}
+		
+		if (m_GlossPtr)
+		{
+			try
+			{
+				phongExponent *= m_GlossPtr->Sample(vertex.uv).r;
+			}
+			catch (...)
+			{
+				// exponent is already set to 2
+			}
+		}
+
+		return BRDF::Phong(	ambientColor, specular, phongExponent, 
+						lightDirection, vertex.viewDirection, vertex.normal);
+	}
+
 	Material_SolidColor::Material_SolidColor(Texture* albedoPtr, Texture* normalPtr)
-		: Material(albedoPtr, normalPtr)
+		: Material(albedoPtr, normalPtr, nullptr, nullptr)
 	{
 	}
 
@@ -57,8 +92,9 @@ namespace dae
 		}
 	}
 
-	Material_Lambert::Material_Lambert(Texture* albedoPtr, Texture* normalPtr, float diffuseReflectance)
-		: Material(albedoPtr, normalPtr)
+	Material_Lambert::Material_Lambert(	Texture* albedoPtr, Texture* normalPtr, 
+										Texture* specularPtr, Texture* glossPtr, float diffuseReflectance)
+		: Material(albedoPtr, normalPtr, specularPtr, glossPtr)
 		, m_DiffuseReflectance{ diffuseReflectance }
 	{
 	}

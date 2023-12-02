@@ -36,19 +36,23 @@ namespace dae
 
 		void SetScene(Scene* scenePtr);
 		void CycleRenderMode();
+		void ToggleNormalMode();
+		void ToggleDepthMode();
 
 	private:
 		// constants to prevent retyping
 		static constexpr int NR_TRI_VERTS{ 3 };
+		static constexpr ColorRGB AMBIENT_COLOR{ 0.25f, 0.25f, 0.25f };
 		typedef std::array<uint32_t, NR_TRI_VERTS> TriangleIndices;
 		typedef std::vector<Vertex_Out> TriangleVertices;
 
 		enum class RenderMode
 		{
-			Texture,
-			Depth,
-			Color,
-			end
+			ObservedArea,
+			Diffuse,
+			Specular,
+			Combined,
+			end // used for cycling
 		};
 
 		// Rendering functions
@@ -78,12 +82,14 @@ namespace dae
 		 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};
-		RenderMode m_RenderMode{ RenderMode::Texture };
+		RenderMode m_RenderMode{ RenderMode::Combined };
+		bool m_ShowDepth{ false };
+		bool m_UseNormalMap{ true };
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{};
-		
+
 		ColorRGB m_ClearColor{0.3f, 0.3f, 0.3f};
 		float* m_pDepthBufferPixels{};
 

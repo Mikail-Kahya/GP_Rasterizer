@@ -33,6 +33,8 @@ namespace dae
 		std::vector<Mesh>& GetMeshes() { return m_MeshVec; }
 		static Material* GetMaterial(size_t materialIdx);
 
+		static void DeleteResources();
+
 	protected:
 		Texture* AddTexture(const std::string& path);
 		Mesh& AddMesh(const std::string& path);

@@ -143,19 +143,7 @@ void Renderer::RenderTriangle(Material* materialPtr)
 
 			if (AddPixelToDepthBuffer(interpolatedVertex.position.z, px, py))
 			{
-				// Depth view mode
-				const float depthColor{ GeometryUtils::Remap(0.8f, 1.f, interpolatedVertex.position.z) };
-
-				switch (m_RenderMode)
-				{
-				case RenderMode::Texture:
-					finalColor = ShadePixel(interpolatedVertex, materialPtr);
-					break;
-				case RenderMode::Depth:
-					finalColor = ColorRGB{ depthColor, depthColor, depthColor };
-					break;
-				}
-
+				finalColor = ShadePixel(interpolatedVertex, materialPtr);
 				AddPixelToRGBBuffer(finalColor, px, py);
 			}
 				
@@ -225,7 +213,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	float wDepth{};
 
 	// pixel data
-	ColorRGB finalColor{};
+	ColorRGB color{};
 	Vector2 UVCoord{};
 	Vector3 normal{};
 	Vector3 tangent{};
@@ -245,7 +233,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 		zDepth += weightedZ;
 
 		// non-Linear interpolation
-		finalColor += vertex.color * weightedW;
+		color += vertex.color * weightedW;
 		UVCoord += vertex.uv * weightedW;
 		// World space interpolation
 		normal += vertex.normal * weight;
@@ -257,7 +245,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	zDepth = 1 / zDepth;
 	wDepth = 1 / wDepth;
 
-	finalColor *= wDepth;
+	color *= wDepth;
 	UVCoord *= wDepth;
 
 	// Normalize => Crossed later
@@ -268,7 +256,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 
 	return{
 		{ 0, 0, zDepth, wDepth },
-		finalColor,
+		color,
 		UVCoord,
 		normal,
 		tangent,
@@ -278,14 +266,41 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 
 ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const
 {
+	if (m_ShowDepth)
+	{
+		// Depth view mode
+		const float depthColor{ GeometryUtils::Remap(0.8f, 1.f, vertex.position.z) };
+		return ColorRGB{ depthColor, depthColor, depthColor };
+	}
+
 	const Vector3 lightDirection{ 0.577f, -0.577f, 0.577f };
 
 	const ColorRGB albedo{ materialPtr->GetAlbedo(vertex) };
-	const Vector3 normal{ materialPtr->GetNormal(vertex) };
+
+	const Vector3 normal{ m_UseNormalMap ? materialPtr->GetNormal(vertex) : vertex.normal };
+	const ColorRGB specular{ materialPtr->GetSpecular(vertex, lightDirection, AMBIENT_COLOR) };
 
 	const float observedArea{ BRDF::ObservedArea(lightDirection, normal) };
 
-	return albedo * observedArea;
+
+	ColorRGB finalColor{};
+	switch (m_RenderMode)
+	{
+	case RenderMode::ObservedArea: 
+		finalColor = colors::White * observedArea;
+		break;
+	case RenderMode::Diffuse: 
+		finalColor = albedo * observedArea;
+		break;
+	case RenderMode::Specular: 
+		finalColor = specular * observedArea;
+		break;
+	case RenderMode::Combined: 
+		finalColor = (albedo + specular) * observedArea;
+		break;
+	}
+
+	return finalColor;
 }
 
 void Renderer::UpdateBuffer()
@@ -404,4 +419,14 @@ void Renderer::CycleRenderMode()
 	int modeIdx{ static_cast<int>(m_RenderMode) };
 	modeIdx = ++modeIdx % endIdx;
 	m_RenderMode = static_cast<RenderMode>(modeIdx);
+}
+
+void Renderer::ToggleNormalMode()
+{
+	m_UseNormalMap = !m_UseNormalMap;
+}
+
+void Renderer::ToggleDepthMode()
+{
+	m_ShowDepth = !m_ShowDepth;
 }

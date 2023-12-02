@@ -27,7 +27,16 @@ namespace dae {
         }
 	}
 
-    Texture* Scene::AddTexture(const std::string& path)
+	void Scene::DeleteResources()
+	{
+        for (Texture* texturePtr : m_TexturePtrVec)
+            delete texturePtr;
+
+        for (Material* materialPtr : m_MaterialPtrVec)
+            delete materialPtr;
+	}
+
+	Texture* Scene::AddTexture(const std::string& path)
 	{
         Texture* texturePtr{ Texture::LoadFromFile(path) };
         m_TexturePtrVec.push_back(texturePtr);
@@ -143,13 +152,13 @@ namespace dae {
         Mesh& mesh{ AddMesh("tuktuk.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
-        mesh.materialIdx = AddMaterial(new Material_SolidColor{ AddTexture("tuktuk.png"), nullptr });
+        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("tuktuk.png"), nullptr, nullptr, nullptr, 7.f });
 	}
 
 	void Scene_W8_Vehicle::Initialize()
 	{
         sceneName = "Scene W8: Vehicle";
-        m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+        m_Camera.Initialize(45.f, { .0f,.0f,0.f });
 
         Mesh& mesh{ AddMesh("vehicle.obj") };
 
@@ -157,8 +166,11 @@ namespace dae {
         mesh.materialIdx = AddMaterial(new Material_Lambert{
         	AddTexture("vehicle_diffuse.png"), 
             AddTexture("vehicle_normal.png"),
+        	AddTexture("vehicle_specular.png"),
+            AddTexture("vehicle_gloss.png"),
         	10.f
         });
+        
 	}
 #pragma endregion
 }

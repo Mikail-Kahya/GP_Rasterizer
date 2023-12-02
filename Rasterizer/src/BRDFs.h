@@ -30,5 +30,12 @@ namespace dae
 			// Use inverted light (hit to light)
 			return std::max(0.f, Vector3::Dot(-lightDirection, normal));
 		}
+
+		static ColorRGB Phong(const ColorRGB& color, float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
+		{
+			//todo: W3
+			const float cosAngle{ Vector3::Dot(Vector3::Reflect(l, n), -v) };
+			return ks * powf(std::max(0.f, cosAngle), exp) * color;
+		}
 	}
 }

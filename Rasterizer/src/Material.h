@@ -17,7 +17,7 @@ namespace dae
 	class Material
 	{
 	public:
-		Material(Texture* albedoPtr, Texture* normalPtr);
+		Material(Texture* albedoPtr, Texture* normalPtr, Texture* specularPtr, Texture* glossPtr);
 		virtual ~Material() = default;
 
 		Material(const Material&) = delete;
@@ -27,11 +27,13 @@ namespace dae
 
 		virtual ColorRGB GetAlbedo(const Vertex_Out& vertex) const = 0;
 		virtual Vector3 GetNormal(const Vertex_Out& vertex) const;
-
+		virtual ColorRGB GetSpecular(const Vertex_Out& vertex, const Vector3& lightDirection, const ColorRGB& ambientColor = colors::White) const;
 
 	protected:
 		Texture* m_AlbedoPtr{ nullptr };
 		Texture* m_NormalPtr{ nullptr };
+		Texture* m_SpecularPtr{ nullptr };
+		Texture* m_GlossPtr{ nullptr };
 	};
 #pragma endregion
 
@@ -39,7 +41,7 @@ namespace dae
 	class Material_SolidColor final : public Material
 	{
 	public:
-		Material_SolidColor(Texture* albedoPtr, Texture* normalPtr);
+		Material_SolidColor(Texture* albedoPtr, Texture* normalPtr = nullptr);
 		virtual ~Material_SolidColor() override = default;
 
 		Material_SolidColor(const Material_SolidColor&) = delete;
@@ -59,7 +61,7 @@ namespace dae
 	class Material_Lambert final : public Material
 	{
 	public:
-		Material_Lambert(Texture* albedoPtr, Texture* normalPtr, float diffuseReflectance);
+		Material_Lambert(Texture* albedoPtr, Texture* normalPtr = nullptr, Texture* specularPtr = nullptr, Texture* glossPtr = nullptr, float diffuseReflectance = 1.f);
 		virtual ~Material_Lambert() override = default;
 
 		Material_Lambert(const Material_Lambert&) = delete;
