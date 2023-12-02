@@ -81,15 +81,24 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
 
-				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
 					pRenderer->CycleRenderMode();
 
-				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
 				{
 					Scene* scenePtr{ sceneManager.Next() };
 					pRenderer->SetScene(scenePtr);
 					SetTitle(pWindow, scenePtr->GetName());
 				}
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					pRenderer->ToggleDepthMode();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					sceneManager.GetScene()->ToggleMeshUpdates();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					pRenderer->ToggleNormalMode();
 
 				break;
 			}
