@@ -83,6 +83,10 @@ namespace dae
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
 		size_t materialIdx{};
+
+		Vector3 position{};
+		Vector3 rotation{};
+		Vector3 scale{};
 	};
 	
 }

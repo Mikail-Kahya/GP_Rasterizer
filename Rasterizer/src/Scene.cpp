@@ -170,7 +170,22 @@ namespace dae {
             AddTexture("vehicle_gloss.png"),
         	10.f
         });
-        
+
+
+        mesh.position = { 0,0,50 };
+	}
+
+	void Scene_W8_Vehicle::Update(dae::Timer* pTimer)
+	{
+		Scene::Update(pTimer);
+
+        constexpr float rotSpeed{ 1.f };
+
+		for (Mesh& mesh : m_MeshVec)
+		{
+            mesh.rotation.y += 1 * pTimer->GetElapsed();
+            mesh.worldMatrix = Matrix::CreateRotationY(mesh.rotation.y) * Matrix::CreateTranslation(mesh.position);
+		}
 	}
 #pragma endregion
 }

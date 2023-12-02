@@ -129,6 +129,7 @@ namespace dae
 		Scene_W8_Vehicle& operator=(Scene_W8_Vehicle&&) noexcept = delete;
 
 		void Initialize() override;
+		void Update(dae::Timer* pTimer) override;
 	};
 	
 }
