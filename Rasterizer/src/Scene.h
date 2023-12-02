@@ -22,10 +22,9 @@ namespace dae
 		Scene& operator=(Scene&&) noexcept = delete;
 
 		virtual void Initialize() = 0;
-		virtual void Update(dae::Timer* pTimer)
-		{
-			m_Camera.Update(pTimer);
-		}
+		virtual void Update(dae::Timer* timerPtr);
+
+		void ToggleMeshUpdates();
 
 		const std::string& GetName() const { return sceneName; }
 		Camera& GetCamera() { return m_Camera; }
@@ -42,6 +41,8 @@ namespace dae
 
 		std::string	sceneName;
 		Camera m_Camera{};
+		bool m_UpdateMeshes{ true };
+		static constexpr float ROT_SPEED{ 1.f };
 
 		std::vector<Vertex> m_VertexVec{};
 		std::vector<Mesh> m_MeshVec{};
@@ -129,7 +130,6 @@ namespace dae
 		Scene_W8_Vehicle& operator=(Scene_W8_Vehicle&&) noexcept = delete;
 
 		void Initialize() override;
-		void Update(dae::Timer* pTimer) override;
 	};
 	
 }

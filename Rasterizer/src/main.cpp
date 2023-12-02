@@ -90,8 +90,6 @@ int main(int argc, char* args[])
 					pRenderer->SetScene(scenePtr);
 					SetTitle(pWindow, scenePtr->GetName());
 				}
-					
-					
 
 				break;
 			}

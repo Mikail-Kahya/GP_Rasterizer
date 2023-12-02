@@ -14,6 +14,25 @@ namespace dae {
             m_MaterialPtrVec.push_back(new Material_SolidColor{ AddTexture("uv_grid_2.png"), nullptr });
 	}
 
+	void Scene::Update(dae::Timer* timerPtr)
+	{
+        m_Camera.Update(timerPtr);
+
+        if (!m_UpdateMeshes || m_MeshVec.empty())
+            return;
+
+        for (Mesh& mesh : m_MeshVec)
+        {
+            mesh.rotation.y += ROT_SPEED * timerPtr->GetElapsed();
+            mesh.worldMatrix = Matrix::CreateRotationY(mesh.rotation.y) * Matrix::CreateTranslation(mesh.position);
+        }
+	}
+
+	void Scene::ToggleMeshUpdates()
+	{
+        m_UpdateMeshes = !m_UpdateMeshes;
+	}
+
 	Material* Scene::GetMaterial(size_t materialIdx)
 	{
         try
@@ -171,21 +190,7 @@ namespace dae {
         	10.f
         });
 
-
         mesh.position = { 0,0,50 };
-	}
-
-	void Scene_W8_Vehicle::Update(dae::Timer* pTimer)
-	{
-		Scene::Update(pTimer);
-
-        constexpr float rotSpeed{ 1.f };
-
-		for (Mesh& mesh : m_MeshVec)
-		{
-            mesh.rotation.y += 1 * pTimer->GetElapsed();
-            mesh.worldMatrix = Matrix::CreateRotationY(mesh.rotation.y) * Matrix::CreateTranslation(mesh.position);
-		}
 	}
 #pragma endregion
 }
