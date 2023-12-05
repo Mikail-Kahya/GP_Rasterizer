@@ -368,16 +368,18 @@ void Renderer::CycleRenderMode()
 	modeIdx = ++modeIdx % endIdx;
 	m_RenderMode = static_cast<RenderMode>(modeIdx);
 
-	constexpr std::string renderStringArr[]{ "Combined", "Observed area", "Diffuse", "Specular", "Pure diffuse"};
+	const std::string renderStringArr[]{ "Combined", "Observed area", "Diffuse", "Specular", "Pure diffuse"};
 	std::cout << "Render mode: " << renderStringArr[modeIdx] << std::endl;
 }
 
 void Renderer::ToggleNormalMode()
 {
 	m_UseNormalMap = !m_UseNormalMap;
+	std::cout << "Normals: " << std::boolalpha << m_UseNormalMap << std::endl;
 }
 
 void Renderer::ToggleDepthMode()
 {
 	m_ShowDepth = !m_ShowDepth;
+	std::cout << "Depth mode: " << std::boolalpha << m_UseNormalMap << std::endl;
 }

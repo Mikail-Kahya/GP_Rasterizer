@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <iostream>
+
 #include "Material.h"
 #include "Texture.h"
 #include "Utils.h"
@@ -31,6 +33,7 @@ namespace dae {
 	void Scene::ToggleMeshUpdates()
 	{
         m_UpdateMeshes = !m_UpdateMeshes;
+        std::cout << "Rotation: " << std::boolalpha << m_UpdateMeshes << std::endl;
 	}
 
 	Material* Scene::GetMaterial(size_t materialIdx)
@@ -178,7 +181,9 @@ namespace dae {
 	void Scene_W8_Vehicle::Initialize()
 	{
         sceneName = "Scene W8: Vehicle";
-        m_Camera.Initialize(45.f);
+        m_Camera.Initialize(45.f, { 0, 5.f, -64.f });
+        m_Camera.zNear = 0.1f;
+        m_Camera.zFar = 100.f;
 
         constexpr float diffuseReflectance{ 7.f };
         Mesh& mesh{ AddMesh("vehicle.obj") };
@@ -191,8 +196,6 @@ namespace dae {
             AddTexture("vehicle_gloss.png"),
         	diffuseReflectance
         });
-
-        mesh.position = { 0,0,50 };
 	}
 #pragma endregion
 }

@@ -42,7 +42,7 @@ namespace dae
 	private:
 		// constants to prevent retyping
 		static constexpr int NR_TRI_VERTS{ 3 };
-		static constexpr ColorRGB AMBIENT_COLOR{ 0.25f, 0.25f, 0.25f };
+		static constexpr ColorRGB AMBIENT_COLOR{ 0.3f, 0.3f, 0.3f };
 		typedef std::array<uint32_t, NR_TRI_VERTS> TriangleIndices;
 		typedef std::vector<Vertex_Out> TriangleVertices;
 

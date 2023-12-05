@@ -6,8 +6,6 @@ SceneManager::SceneManager()
 {
 	m_ScenePtrList.push_back(new dae::Scene_W8_Vehicle());
 	m_ScenePtrList.push_back(new dae::Scene_W8_TukTuk());
-	m_ScenePtrList.push_back(new dae::Scene_W7_List());
-	m_ScenePtrList.push_back(new dae::Scene_W7_Strip());
 
 	for (dae::Scene* scenePtr : m_ScenePtrList)
 		scenePtr->Initialize();

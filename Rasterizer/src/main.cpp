@@ -28,6 +28,19 @@ void SetTitle(SDL_Window* windowPtr, const std::string& title)
 	SDL_SetWindowTitle(windowPtr, ("Rasterizer (Mikail Kahya 2GD10) - " + title).c_str());
 }
 
+void PrintInfo()
+{
+	std::cout << "------------------------------\n";
+	std::cout << "Cycle through scene: F3\n";
+	std::cout << "Toggle depth buffer: F4\n";
+	std::cout << "Toggle rotation: F5\n";
+	std::cout << "Toggle normals: F6\n";
+	std::cout << "Cycle shading mode: F7\n";
+	std::cout << "\n--- Print info: I\n";
+	std::cout << "--- Clear console: C\n";
+	std::cout << "------------------------------" << std::endl;
+}
+
 int main(int argc, char* args[])
 {
 	//Unreferenced parameters
@@ -60,6 +73,7 @@ int main(int argc, char* args[])
 	pRenderer->SetScene(sceneManager.GetScene());
 	SetTitle(pWindow, sceneManager.GetScene()->GetName());
 
+	PrintInfo();
 	// Start Benchmark
 	// TODO pTimer->StartBenchmark();
 
@@ -99,6 +113,12 @@ int main(int argc, char* args[])
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					pRenderer->ToggleNormalMode();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_I)
+					PrintInfo();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_C)
+					system("CLS");
 
 				break;
 			}

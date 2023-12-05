@@ -38,7 +38,7 @@ namespace dae
 		{
 			const float range{ max - min };
 			const float multiplier{ 1 / range };
-			return (min - value) * multiplier;
+			return (max - value) * multiplier;
 		}
 
 		inline Uint32 GetSDLRGB(SDL_Surface* bufferPtr, const ColorRGB& color)

@@ -83,24 +83,35 @@ namespace dae
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
-			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			// mouseState: left == 1, middle == 2, right == 3
-			switch (mouseState)
+			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+			const bool leftPress{ static_cast<bool>(mouseState & SDL_BUTTON_LMASK) };
+			const bool rightPress{ static_cast<bool>(mouseState & SDL_BUTTON_RMASK) };
+
+			// Only left mouse
+			if (leftPress && !rightPress)
 			{
-			case SDL_BUTTON(1):
 				MouseMove(mouseY, deltaTime);
-				//Rotate(mouseX, 0, deltaTime);
-				break;
-			case SDL_BUTTON(3):
+				Rotate(mouseX * 0.1f, 0);
+			}
+
+			// Only right mouse
+			if (rightPress && !leftPress)
+			{
 				Move(pKeyboardState, mouseState, mouseY, deltaTime);
-				Rotate(mouseX, mouseY, deltaTime);
-				break;
+				Rotate(mouseX, mouseY);
+			}
+
+			// Left and right mouse
+			if (leftPress && rightPress && mouseY)
+			{
+				VerticalMove(-mouseY / abs(mouseY), deltaTime);
 			}
 
 			//Update Matrices
 			CalculateViewMatrix();
 
+			// Only update if the ratio or fov changes
 			if (RatiosChanged())
 				CalculateProjectionMatrix();
 
@@ -137,7 +148,7 @@ namespace dae
 				origin += up * movedDistance;
 		}
 
-		void Rotate(int mouseX, int mouseY, float deltaTime)
+		void Rotate(int mouseX, int mouseY)
 		{
 			bool mouseMoved{ false };
 
@@ -172,6 +183,12 @@ namespace dae
 				origin += forward * movedDistance;
 			else if (mouseY > 0)
 				origin -= forward * movedDistance;
+		}
+
+		void VerticalMove(int direction, float deltaTime)
+		{
+			const float movedDistance{ moveSpeed * deltaTime };
+			origin += up * direction * movedDistance;
 		}
 
 		bool RatiosChanged() const
