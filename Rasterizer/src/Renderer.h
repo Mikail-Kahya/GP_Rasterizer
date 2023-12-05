@@ -48,10 +48,11 @@ namespace dae
 
 		enum class RenderMode
 		{
+			Combined,
 			ObservedArea,
 			Diffuse,
 			Specular,
-			Combined,
+			PureDiffuse,
 			end // used for cycling
 		};
 
@@ -64,7 +65,7 @@ namespace dae
 
 		Vector4 NDCToScreenSpace(const Vector4& NDC) const;
 		void FillTriangle(const TriangleVertices& vertices, const TriangleIndices& indices);
-		Vertex_Out InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const;
+		Vertex_Out InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float paraArea) const;
 		ColorRGB ShadePixel(const Vertex_Out& vertex, Material* materialPtr) const;
 
 		// Buffer functions
@@ -73,12 +74,7 @@ namespace dae
 		bool AddPixelToDepthBuffer(float depth, int x, int y) const;
 
 		// Helpers
-		Uint32 GetSDLRGB(const ColorRGB& color) const;
-		int GetNrStrips(const std::vector<uint32_t>& indexVec) const;
 		TriangleIndices GetIndices(const Mesh& mesh, int triIdx) const;
-
-		bool IsDegenerate(const std::vector<uint32_t>& indexVec);
-		bool InFrustum(const TriangleVertices& vertices);
 		 
 		SDL_Window* m_pWindow{};
 		Scene* m_ScenePtr{};

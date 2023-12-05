@@ -5,6 +5,8 @@
 //Project includes
 #include "Renderer.h"
 
+#include <iostream>
+
 #include "Material.h"
 #include "Scene.h"
 #include "Texture.h"
@@ -80,7 +82,7 @@ void Renderer::RenderMesh(const Mesh& mesh)
 	{
 		// Strip degenerate check
 		if (mesh.primitiveTopology == PrimitiveTopology::TriangleStrip &&
-			IsDegenerate(mesh.indices))
+			GeometryUtils::IsDegenerate(mesh.indices))
 			continue;
 
 		// Fills the triangle vertices in m_TriangleVertices
@@ -88,7 +90,7 @@ void Renderer::RenderMesh(const Mesh& mesh)
 		FillTriangle(mesh.vertices_out, indices);
 
 		// Frustum culling
-		if (!InFrustum(m_TriangleVertices))
+		if (!GeometryUtils::InFrustum(m_TriangleVertices))
 			continue;
 
 		if (mesh.primitiveTopology == PrimitiveTopology::TriangleStrip &&
@@ -108,7 +110,7 @@ void Renderer::RenderTriangle(Material* materialPtr)
 	// Calculate area of triangle
 	const Vector2 edge1{ m_TriangleVertices[1].position - m_TriangleVertices[0].position };
 	const Vector2 edge2{ m_TriangleVertices[2].position - m_TriangleVertices[0].position };
-	const float triArea{ Vector2::Cross(edge1, edge2) * 0.5f};
+	const float paraArea{ Vector2::Cross(edge1, edge2)};
 
 	const Rect boundingBox{ GeometryUtils::GetBoundingBox({
 		m_TriangleVertices[0].position,
@@ -139,7 +141,7 @@ void Renderer::RenderTriangle(Material* materialPtr)
 			if (!inTriangle)
 				continue;
 
-			const Vertex_Out interpolatedVertex{ InterpolateVertices(m_TriangleVertices, m_AreaParallelVec, triArea) };
+			const Vertex_Out interpolatedVertex{ InterpolateVertices(m_TriangleVertices, m_AreaParallelVec, paraArea) };
 
 			if (AddPixelToDepthBuffer(interpolatedVertex.position.z, px, py))
 			{
@@ -162,8 +164,8 @@ void Renderer::VerticesTransform(std::vector<Mesh>& meshVec) const
 		for (Vertex& vertex : mesh.vertices)
 		{
 			Vertex_Out vertex_out{ VertexTransform(vertex, worldViewProjectionMatrix) };
-			vertex_out.normal = mesh.worldMatrix.TransformPoint(vertex.normal).Normalized();
-			vertex_out.tangent = mesh.worldMatrix.TransformPoint(vertex.tangent).Normalized();
+			vertex_out.normal = mesh.worldMatrix.TransformVector(vertex.normal).Normalized();
+			vertex_out.tangent = mesh.worldMatrix.TransformVector(vertex.tangent).Normalized();
 			vertex_out.viewDirection = vertex.position - camera.origin;
 
 			mesh.vertices_out.push_back(std::move(vertex_out));
@@ -207,7 +209,7 @@ void Renderer::FillTriangle(const TriangleVertices& vertices, const TriangleIndi
 		m_TriangleVertices[vertexIdx] = vertices[indices[vertexIdx]];
 }
 
-Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float triArea) const
+Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const std::vector<float>& vertexAreaVec, float paraArea) const
 {
 	float zDepth{};
 	float wDepth{};
@@ -223,7 +225,7 @@ Vertex_Out Renderer::InterpolateVertices(const TriangleVertices& vertices, const
 	for (int interpolateIdx{}; interpolateIdx < NR_TRI_VERTS; ++interpolateIdx)
 	{
 		const int oppositeIdx{ (interpolateIdx + 2) % NR_TRI_VERTS };
-		const float weight{ (vertexAreaVec[interpolateIdx] * 0.5f) / triArea };
+		const float weight{ vertexAreaVec[interpolateIdx] / paraArea };
 		const Vertex_Out& vertex{ vertices[oppositeIdx] };
 
 		const float weightedW{ 1 / vertex.position.w * weight };
@@ -298,6 +300,9 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 	case RenderMode::Combined: 
 		finalColor = (albedo + specular) * observedArea;
 		break;
+	case RenderMode::PureDiffuse:
+		finalColor = albedo;
+		break;
 	}
 
 	return finalColor;
@@ -305,7 +310,7 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 
 void Renderer::UpdateBuffer()
 {
-	SDL_FillRect(m_pBackBuffer, nullptr, GetSDLRGB(m_ClearColor));
+	SDL_FillRect(m_pBackBuffer, nullptr, GeometryUtils::GetSDLRGB(m_pBackBuffer, m_ClearColor));
 	std::fill_n(m_pDepthBufferPixels, m_Width * m_Height, FLT_MAX);
 }
 
@@ -314,7 +319,7 @@ void Renderer::AddPixelToRGBBuffer(ColorRGB& color, int x, int y) const
 	//Update Color in Buffer
 	color.MaxToOne();
 
-	m_pBackBufferPixels[x + (y * m_Width)] = GetSDLRGB(color);
+	m_pBackBufferPixels[x + (y * m_Width)] = GeometryUtils::GetSDLRGB(m_pBackBuffer, color);
 }
 
 bool Renderer::AddPixelToDepthBuffer(float depth, int x, int y) const
@@ -325,30 +330,6 @@ bool Renderer::AddPixelToDepthBuffer(float depth, int x, int y) const
 		m_pDepthBufferPixels[idx] = depth;
 
 	return isCloser;
-}
-
-Uint32 Renderer::GetSDLRGB(const ColorRGB& color) const
-{
-	return SDL_MapRGB(m_pBackBuffer->format,
-		static_cast<uint8_t>(color.r * 255),
-		static_cast<uint8_t>(color.g * 255),
-		static_cast<uint8_t>(color.b * 255));
-}
-
-int Renderer::GetNrStrips(const std::vector<uint32_t>& indices) const
-{
-	int nrOfDoubles{};
-	int prevNr{ -1 };
-
-	for (uint32_t idx : indices)
-	{
-		if (prevNr == idx)
-			++nrOfDoubles;
-		prevNr = idx;
-	}
-
-	// there will always be two doubles per degenerate tri so divide by 2
-	return nrOfDoubles / 2;
 }
 
 Renderer::TriangleIndices Renderer::GetIndices(const Mesh& mesh, int triIdx) const
@@ -370,38 +351,6 @@ Renderer::TriangleIndices Renderer::GetIndices(const Mesh& mesh, int triIdx) con
 	return indexArr;
 }
 
-bool Renderer::IsDegenerate(const std::vector<uint32_t>& indexVec)
-{
-	int prevNr{ -1 };
-
-	for (uint32_t index : indexVec)
-	{
-		if (prevNr == index)
-			return true;
-
-		prevNr = index;
-	}
-
-	return false;
-}
-
-bool Renderer::InFrustum(const TriangleVertices& vertexVec)
-{
-	for (const Vertex_Out& vertex : vertexVec)
-	{
-		if (!InRange(0.f, 1.f, vertex.position.z))
-			return false;
-
-		if (!InRange(-1.f, 1.f, vertex.position.x))
-			return false;
-
-		if (!InRange(-1.f, 1.f, vertex.position.y))
-			return false;
-	}
-
-	return true;
-}
-
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
@@ -419,6 +368,9 @@ void Renderer::CycleRenderMode()
 	int modeIdx{ static_cast<int>(m_RenderMode) };
 	modeIdx = ++modeIdx % endIdx;
 	m_RenderMode = static_cast<RenderMode>(modeIdx);
+
+	constexpr std::string renderStringArr[]{ "Combined", "Observed area", "Diffuse", "Specular", "Pure diffuse"};
+	std::cout << "Render mode: " << renderStringArr[modeIdx] << std::endl;
 }
 
 void Renderer::ToggleNormalMode()

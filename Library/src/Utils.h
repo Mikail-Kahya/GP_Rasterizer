@@ -34,6 +34,21 @@ namespace dae
 			return true;
 		}
 
+		inline float Remap(float min, float max, float value)
+		{
+			const float range{ max - min };
+			const float multiplier{ 1 / range };
+			return (min - value) * multiplier;
+		}
+
+		inline Uint32 GetSDLRGB(SDL_Surface* bufferPtr, const ColorRGB& color)
+		{
+			return SDL_MapRGB(bufferPtr->format,
+				static_cast<uint8_t>(color.r * 255),
+				static_cast<uint8_t>(color.g * 255),
+				static_cast<uint8_t>(color.b * 255));
+		}
+
 		inline Rect GetBoundingBox(const std::vector<Vector4>& vertices) noexcept
 		{
 			if (vertices.empty())
@@ -54,11 +69,36 @@ namespace dae
 			return Rect{ bottomLeft, topRight };
 		}
 
-		inline float Remap(float min, float max, float value)
+		inline bool InFrustum(const std::vector<Vertex_Out>& vertices)
 		{
-			const float range{ max - min };
-			const float multiplier{ 1 / range };
-			return (min - value) * multiplier;
+			for (const Vertex_Out& vertex : vertices)
+			{
+				if (!InRange(0.f, 1.f, vertex.position.z))
+					return false;
+
+				if (!InRange(-1.f, 1.f, vertex.position.x))
+					return false;
+
+				if (!InRange(-1.f, 1.f, vertex.position.y))
+					return false;
+			}
+
+			return true;
+		}
+
+		inline bool IsDegenerate(const std::vector<uint32_t>& indexVec)
+		{
+			int prevNr{ -1 };
+
+			for (uint32_t index : indexVec)
+			{
+				if (prevNr == index)
+					return true;
+
+				prevNr = index;
+			}
+
+			return false;
 		}
 
 #pragma endregion

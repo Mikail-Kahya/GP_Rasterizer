@@ -190,7 +190,7 @@ namespace dae {
         	10.f
         });
 
-        //mesh.position = { 0,0,50 };
+        mesh.position = { 0,0,50 };
 	}
 #pragma endregion
 }

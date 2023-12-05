@@ -27,7 +27,7 @@ namespace dae
 			};
 
 			const ColorRGB sampledNormal{ m_NormalPtr->Sample(vertex.uv) };
-			return  tangentSpaceAxis.TransformPoint({
+			return  tangentSpaceAxis.TransformVector({
 				2.f * sampledNormal.r - 1.f,
 				2.f * sampledNormal.g - 1.f,
 				2.f * sampledNormal.b - 1.f,
