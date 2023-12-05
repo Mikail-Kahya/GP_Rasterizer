@@ -35,7 +35,7 @@ namespace dae
 		Matrix projectionMatrix{};
 
 		// in degrees
-		float rotateSpeed{ 360.f };
+		float rotateSpeed{ 1.5f };
 		float moveSpeed{ 20.f };
 
 		float zFar{ 100.f };
@@ -73,7 +73,7 @@ namespace dae
 
 		void Update(Timer* pTimer)
 		{
-			const float deltaTime = pTimer->GetElapsed();
+			const float deltaTime{ pTimer->GetElapsed() };
 
 			//Camera Update Logic
 			//...
@@ -143,14 +143,14 @@ namespace dae
 
 			if (mouseX)
 			{
-				totalYaw += mouseX / abs(mouseX) * deltaTime * rotateSpeed;
+				totalYaw += mouseX * rotateSpeed;
 				totalYaw = std::fmod(totalYaw, 360.f);
 				mouseMoved = true;
 			}
 			if (mouseY)
 			{
 				// Flor allowed this :)
-				totalPitch -= mouseY / abs(mouseY) * deltaTime * rotateSpeed;
+				totalPitch -= mouseY * rotateSpeed;
 				totalPitch = std::clamp(totalPitch, -90.f, 90.f);
 				mouseMoved = true;
 			}

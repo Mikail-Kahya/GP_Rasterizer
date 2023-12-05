@@ -81,7 +81,7 @@ namespace dae {
     void Scene_W6::Initialize()
 	{
         sceneName = "Scene W6: Test scene";
-		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+		m_Camera.Initialize(45.f, { .0f,.0f,-10.f });
 
 		//default: Material id0 >> SolidColor Material (RED)
 		m_VertexVec = {
@@ -100,7 +100,7 @@ namespace dae {
 	void Scene_W7_List::Initialize()
 	{
         sceneName = "Scene W7: List mesh";
-		m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+		m_Camera.Initialize(45.f, { .0f,.0f,-10.f });
 
         m_MeshVec = {
             Mesh
@@ -131,7 +131,7 @@ namespace dae {
 	void Scene_W7_Strip::Initialize()
 	{
         sceneName = "Scene W7: Strip mesh";
-        m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+        m_Camera.Initialize(45.f, { .0f,.0f,-10.f });
 
         m_MeshVec = {
             Mesh
@@ -166,19 +166,21 @@ namespace dae {
 	void Scene_W8_TukTuk::Initialize()
 	{
         sceneName = "Scene W8: Tuk Tuk";
-        m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+        m_Camera.Initialize(45.f);
 
         Mesh& mesh{ AddMesh("tuktuk.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
-        mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("tuktuk.png"), nullptr, nullptr, nullptr, 7.f });
+		mesh.materialIdx = AddMaterial(new Material_Lambert{ AddTexture("tuktuk.png"), nullptr, nullptr, nullptr, 7.f });
+        mesh.position = { 0,0, 20 };
 	}
 
 	void Scene_W8_Vehicle::Initialize()
 	{
         sceneName = "Scene W8: Vehicle";
-        m_Camera.Initialize(45.f, { .0f,.0f,0.f });
+        m_Camera.Initialize(45.f);
 
+        constexpr float diffuseReflectance{ 7.f };
         Mesh& mesh{ AddMesh("vehicle.obj") };
 
         mesh.primitiveTopology = PrimitiveTopology::TriangleList;
@@ -187,7 +189,7 @@ namespace dae {
             AddTexture("vehicle_normal.png"),
         	AddTexture("vehicle_specular.png"),
             AddTexture("vehicle_gloss.png"),
-        	10.f
+        	diffuseReflectance
         });
 
         mesh.position = { 0,0,50 };

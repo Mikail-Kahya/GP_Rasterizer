@@ -284,7 +284,6 @@ ColorRGB Renderer::ShadePixel(const Vertex_Out& vertex, Material* materialPtr) c
 
 	const float observedArea{ BRDF::ObservedArea(lightDirection, normal) };
 
-
 	ColorRGB finalColor{};
 	switch (m_RenderMode)
 	{
